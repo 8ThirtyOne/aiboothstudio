@@ -16,6 +16,8 @@ Landing site and 3D trade show booth designer, staged at `staging.aiboothstudio.
 | `js/config.js`, `js/accounts.js` | Supabase sign-in (email links) and the signed-in customer's active pass |
 | `api/_db.js` | Server access to the passes table (SUPABASE_URL, SUPABASE_SECRET_KEY) |
 | `supabase/schema.sql` | Database setup, run once in the Supabase SQL Editor |
+| `supabase/002_ai_limits.sql` | Adds AI action limits per pass; run after schema.sql |
+| `terms/`, `privacy/`, `refunds/` | Legal pages (drafts: fill in the highlighted details and have them reviewed) |
 
 ## Hosting (Vercel)
 

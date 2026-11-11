@@ -16,7 +16,7 @@
   async function loadPass() {
     if (!state.user) { state.pass = null; return; }
     const { data, error } = await client.from('passes')
-      .select('plan, starts_at, ends_at, images_total, images_used, videos_total, videos_used, livemode')
+      .select('plan, starts_at, ends_at, ai_total, ai_used, images_total, images_used, videos_total, videos_used, livemode')
       .gt('ends_at', new Date().toISOString())
       .order('ends_at', { ascending: false })
       .limit(1);

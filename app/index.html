@@ -463,7 +463,7 @@ details.sec > .ss > .ss-label { display: none; }
 .gen-note b { color: var(--fg); }
 .gen-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; }
 .gen-pass { font: 12px var(--font-ui); padding: 6px 8px; background: var(--panel); color: var(--fg); border: 1px solid var(--border); border-radius: var(--r); }
-.gen-credits { display: flex; gap: 8px; }
+.gen-credits { display: flex; flex-wrap: wrap; gap: 8px; }
 .gen-chip { display: grid; gap: 1px; padding: 7px 12px; border-radius: var(--r); background: var(--panel); border: 1px solid var(--border); min-width: 92px; }
 .gen-chip b { font: 400 20px/1 var(--font-head); color: var(--accent); }
 .gen-chip span { font: 500 10px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-muted); }
@@ -4241,7 +4241,7 @@ function openAccountLive() {
       <div class="acct-row"><span>Pass</span><b>${p ? p.name + (r.livemode ? '' : ' (test)') : 'No active pass'}</b></div>
       ${r ? `<div class="acct-row"><span>Active until</span><b>${fmtDate(r.ends_at)}</b></div>` : ''}
     </div>
-    ${r ? `<div class="gen-credits"><div class="gen-chip"><b>${r.images_total - r.images_used} / ${r.images_total}</b><span>Images left</span></div><div class="gen-chip"><b>${r.videos_total - r.videos_used} / ${r.videos_total}</b><span>Videos left</span></div></div>` : '<p style="font-size:13px;color:var(--fg-muted);line-height:1.5">Buy a pass with this email to unlock AI features and image and video credits. It shows up here a few seconds after checkout.</p>'}
+    ${r ? `<div class="gen-credits">${r.ai_total ? `<div class="gen-chip"><b>${r.ai_total - r.ai_used} / ${r.ai_total}</b><span>AI actions left</span></div>` : ''}<div class="gen-chip"><b>${r.images_total - r.images_used} / ${r.images_total}</b><span>Images left</span></div><div class="gen-chip"><b>${r.videos_total - r.videos_used} / ${r.videos_total}</b><span>Videos left</span></div></div>` : '<p style="font-size:13px;color:var(--fg-muted);line-height:1.5">Buy a pass with this email to unlock AI features and image and video credits. It shows up here a few seconds after checkout.</p>'}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${r ? '<button class="btn" id="acct-refresh">Refresh</button>' : '<a class="btn btn-primary" href="/#pricing" style="text-align:center">See passes</a>'}<button class="btn" id="acct-out">Sign out</button></div>
     <div class="acct-msg" id="acct-msg" aria-live="polite"></div>`;
   document.getElementById('acct-who').textContent = acct.email;
@@ -4451,7 +4451,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v49'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v50'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);

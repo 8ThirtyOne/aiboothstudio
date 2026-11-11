@@ -25,7 +25,7 @@ async function rest(path, { method = "GET", body, prefer } = {}) {
 
 // Records a purchased pass. Safe to call twice for the same Stripe session (Stripe can resend notices).
 // Returns the new row, or null when this session was already recorded.
-export async function recordPass({ email, plan, days, images, videos, amountCents, livemode, stripeSession }) {
+export async function recordPass({ email, plan, days, images, videos, ai, amountCents, livemode, stripeSession }) {
   const now = Date.now();
   const row = {
     email: email.toLowerCase(),
@@ -34,6 +34,7 @@ export async function recordPass({ email, plan, days, images, videos, amountCent
     ends_at: new Date(now + days * 864e5).toISOString(),
     images_total: images,
     videos_total: videos,
+    ai_total: ai,
     amount_cents: amountCents,
     livemode,
     stripe_session: stripeSession,
@@ -59,4 +60,10 @@ export async function userFromToken(token) {
   if (!r.ok) return null;
   const u = await r.json();
   return u?.email ? { id: u.id, email: u.email.toLowerCase() } : null;
+}
+
+// Uses one AI design action on a pass. Returns true if one was available and used.
+export async function useAiAction(passId) {
+  const ok = await rest("rpc/use_ai_action", { method: "POST", body: { p_pass: passId } });
+  return ok === true;
 }
