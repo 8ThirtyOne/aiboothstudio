@@ -12,6 +12,14 @@
   };
   const latestImage = () => live.items.find(r => r.kind === 'image' && r.status === 'done' && r.result_url);
   const POLL_MS = { image: 4000, video: 10000 };
+  // One-click art direction styles. Picking one fills the box, which stays editable.
+  const STYLES = [
+    { id: 'flagship', name: 'Award-winning flagship', text: 'Award-winning flagship exhibit, dramatic LED lighting, bold oversized graphics, striking architectural forms, shot like a design-award photo.' },
+    { id: 'hero', name: 'Clean hero shot', text: 'Professional architectural photograph, wide-angle 24mm lens at eye level, bright even exhibition hall lighting, polished concrete aisle in the foreground, sharp focus, high detail.' },
+    { id: 'minimal', name: 'Premium and minimal', text: 'Sophisticated premium exhibit, minimalist luxury finishes, soft backlit glow, generous open space, high-end corporate feel.' },
+    { id: 'busy', name: 'Busy show day', text: 'Award-winning exhibit on the busiest show day, crowds engaging with staff and screens, energetic atmosphere, dramatic lighting.' },
+    { id: 'evening', name: 'Evening reception', text: 'Evening reception at the show, warm dramatic lighting, glowing backlit graphics and LED accents, guests holding drinks, cinematic mood.' },
+  ];
 
   async function api(path, init = {}) {
     const token = await auth.token();
@@ -77,11 +85,17 @@
         <div class="gen-mode-btn" data-mode="upgrade" role="radio" tabindex="0"><b>Concept Upgrade</b><span>AI designs a premium, built-out version of your booth, then photographs it</span></div>
         <div class="gen-mode-btn" data-mode="faithful" role="radio" tabindex="0"><b>Faithful to My Design</b><span>Keeps your design exactly and makes it look real</span></div>
       </div>
+      <div class="gen-styles" role="group" aria-label="Art direction styles">${STYLES.map(s => `<div class="gen-style" role="button" tabindex="0" data-style="${s.id}">${s.name}</div>`).join('')}</div>
       <textarea class="gen-dir" id="gen-dir" rows="3" aria-label="Art direction" placeholder="Art direction (optional), e.g. busy show hours, warm evening light"></textarea>
       <div class="gen-btns"><button class="btn btn-primary" id="gen-img">Generate image · 1 credit</button><button class="btn" id="gen-vid">Generate video · 1 credit</button></div>
       <div class="gen-status" id="gen-status" aria-live="polite">Images take about 30 seconds. Videos animate your latest AI image and take 1–3 minutes; you can keep working meanwhile.</div>
       <div class="ss-title">Your Generations</div><div class="gen-grid" id="gen-grid"></div>`;
-    const vp = document.getElementById('vp-dir'); document.getElementById('gen-dir').value = vp ? vp.value.slice(0, 600) : '';
+    const dirBox = document.getElementById('gen-dir'), styleBtns = [...w.querySelectorAll('.gen-style')];
+    const markStyle = () => styleBtns.forEach(b => b.classList.toggle('on', STYLES.find(s => s.id === b.dataset.style)?.text === dirBox.value.trim()));
+    const vp = document.getElementById('vp-dir'); dirBox.value = (live.dir ?? (vp ? vp.value : STYLES[0].text)).slice(0, 600);
+    styleBtns.forEach(b => { const pick = () => { dirBox.value = STYLES.find(s => s.id === b.dataset.style).text; live.dir = dirBox.value; markStyle(); dirBox.focus(); };
+      b.onclick = pick; b.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } }; });
+    dirBox.oninput = () => { live.dir = dirBox.value; markStyle(); }; markStyle();
     const modeBtns = [...w.querySelectorAll('.gen-mode-btn')];
     const setMode = m => { live.mode = m; modeBtns.forEach(b => { const on = b.dataset.mode === m; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); }); };
     modeBtns.forEach(b => { b.onclick = () => setMode(b.dataset.mode); b.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMode(b.dataset.mode); } }; }); setMode(live.mode);

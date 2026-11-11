@@ -541,3 +541,27 @@ details.sec > .ss > .ss-label { display: none; }
 .gen-mode-btn.on { border-color: var(--accent); background: var(--accent-lo); box-shadow: 0 0 0 1px var(--accent); }
 .gen-animate { position: absolute; left: 8px; bottom: 8px; font: 600 11px var(--font-ui); color: #fff; background: var(--accent); border: 0; border-radius: 999px; padding: 5px 10px; cursor: pointer; }
 @media (max-width: 560px) { .gen-mode { grid-template-columns: 1fr; } }
+
+/* ── Branded pop-up windows: logo header, larger type, pill buttons, roomier inputs ── */
+#modal { background: rgba(5, 8, 14, .6); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+#modal-card { border-radius: 20px; box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .45); border-color: transparent; overflow: hidden; }
+.modal-head { padding: 18px 22px; gap: 14px; background: linear-gradient(180deg, var(--accent-lo), transparent); }
+.modal-head h2 { display: flex; align-items: center; gap: 12px; font: 400 23px/1.15 var(--font-head); letter-spacing: -.01em; }
+.modal-head h2::before { content: ""; flex: none; width: 30px; height: 29px; background: var(--accent); -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%2213%2016%20156%20150%22%3E%3Cpath%20d%3D%22M128.6%2061%2081.6%2045.8V23.5l73.5%2027z%22%2F%3E%3Cpath%20d%3D%22M71.9%2C141.9V23.5L25.8%2C58.3l-9.5%2C104%2C1.5-.5c15.2-9.9%2C33.5-16.8%2C53.6-19.6l.6-.2Z%22%2F%3E%3Cpath%20d%3D%22M160%2C56.6l-34.9%2C12.9v73.8c15.6%2C3%2C30%2C8.5%2C42.5%2C15.9l-7.6-102.6Z%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%2213%2016%20156%20150%22%3E%3Cpath%20d%3D%22M128.6%2061%2081.6%2045.8V23.5l73.5%2027z%22%2F%3E%3Cpath%20d%3D%22M71.9%2C141.9V23.5L25.8%2C58.3l-9.5%2C104%2C1.5-.5c15.2-9.9%2C33.5-16.8%2C53.6-19.6l.6-.2Z%22%2F%3E%3Cpath%20d%3D%22M160%2C56.6l-34.9%2C12.9v73.8c15.6%2C3%2C30%2C8.5%2C42.5%2C15.9l-7.6-102.6Z%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat; }
+.modal-head .btn { width: 36px; height: 36px; padding: 0; border-radius: 50%; display: grid; place-items: center; font-size: 14px; }
+#modal-body { padding: 20px 22px 24px; font-size: 14px; line-height: 1.55; }
+#modal-body .btn { font-size: 14px; padding: 10px 18px; border-radius: 999px; min-height: 40px; }
+#modal-body .btn-sm { font-size: 13px; padding: 7px 14px; min-height: 34px; }
+#modal-body .btn-primary { box-shadow: 0 6px 16px -6px var(--accent); }
+#modal-body input[type="text"], #modal-body input[type="email"], #modal-body input:not([type]), #modal-body textarea, #modal-body select { font-size: 15px; padding: 11px 14px; border-radius: 12px; }
+#modal-body .ss-title { font-size: 17px; margin: 6px 0 12px; }
+#modal-body .gen-note, #modal-body .acct-msg, #modal-body .ds-msg, #modal-body .gen-status { font-size: 13px; }
+#modal-body .acct-field label { font-size: 11px; }
+#modal-body .gen-chip b { font-size: 24px; }
+#modal-body .gen-mode-btn b { font-size: 14px; }
+#modal-body .gen-mode-btn span { font-size: 12.5px; }
+.gen-styles { display: flex; flex-wrap: wrap; gap: 8px; }
+.gen-style { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel); color: var(--fg); font: 600 13px var(--font-ui); cursor: pointer; user-select: none; }
+.gen-style:hover { border-color: var(--accent); }
+.gen-style.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.gen-style:focus-visible, .gen-mode-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

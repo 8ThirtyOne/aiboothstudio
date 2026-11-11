@@ -34,10 +34,13 @@ window.THREE = Object.assign({}, T, {
   sRGBEncoding: T.SRGBColorSpace, // old name, still used in a few places
 });
 
+// Same release label as this loader, so browsers never mix old and new code.
+const V = new URL(import.meta.url).searchParams.get("v") || "";
+const withV = src => (V ? `${src}?v=${V}` : src);
 const app = document.createElement("script");
-app.src = "/app/app.js";
+app.src = withV("/app/app.js");
 // Account designs, autosave and share links build on the app, so they load once it has started.
 app.onload = () => {
-  ["/app/cloud.js", "/app/ai-render.js"].forEach(src => { const s = document.createElement("script"); s.src = src; s.async = false; document.body.append(s); });
+  ["/app/cloud.js", "/app/ai-render.js"].forEach(src => { const s = document.createElement("script"); s.src = withV(src); s.async = false; document.body.append(s); });
 };
 document.body.append(app);

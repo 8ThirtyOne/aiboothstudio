@@ -12,6 +12,7 @@ Landing site and 3D trade show booth designer, staged at `staging.aiboothstudio.
 | `app/ai-render.js` | AI Render, live: photo-realistic images and videos using pass credits |
 | `api/render.js` | Starts and tracks fal.ai renders (FAL_KEY), uses and refunds credits, stores results |
 | `models/` | Real 3D models (CC0, Poly Haven) that replace built-in shapes; see models/README.md |
+| `tools/bump-version.sh` | Bumps the release number (file labels and the version shown in the app) before each release |
 | `api/share.js` | Serves a shared design to its view-only link |
 | `img/` | Images and the hero video |
 | `js/claude-shim.js` | Lets the pages run outside claude.ai: AI requests go to `/api/claude`, file saves become normal downloads |
