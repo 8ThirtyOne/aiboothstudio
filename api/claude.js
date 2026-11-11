@@ -2,7 +2,8 @@
 // Needs ANTHROPIC_API_KEY set in the hosting provider's environment settings. The key never reaches the browser.
 import Anthropic from "@anthropic-ai/sdk";
 
-const client = new Anthropic(); // reads ANTHROPIC_API_KEY from the environment
+// Reads ANTHROPIC_API_KEY from the environment. Stays inside the host's function time limit.
+const client = new Anthropic({ timeout: 55_000, maxRetries: 1 });
 const MODEL = "claude-opus-5-5";
 const MAX_IMAGES = 4;
 const MAX_PROMPT_CHARS = 60_000;
@@ -44,11 +45,15 @@ export default async function handler(req, res) {
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError) return res.status(429).json({ code: "rate_limited", message: "The AI is busy. Try again in a moment." });
     if (err instanceof Anthropic.AuthenticationError) return res.status(503).json({ code: "not_configured", message: "The AI service key is invalid." });
-    if (err instanceof Anthropic.BadRequestError) return res.status(400).json({ code: "bad_request", message: "The AI couldn't read that request." });
+    if (err instanceof Anthropic.BadRequestError) {
+      console.error("claude bad request", err?.message);
+      return res.status(400).json({ code: "bad_request", message: "The AI couldn't read that request." });
+    }
+    if (err instanceof Anthropic.APIConnectionTimeoutError) return res.status(504).json({ code: "timeout", message: "The AI took too long to answer. Try again." });
     if (err instanceof Anthropic.APIConnectionError) return res.status(502).json({ code: "network", message: "Couldn't reach the AI service." });
-    console.error("claude api error", err?.status, err?.message);
-    return res.status(502).json({ code: "server_error", message: "The AI service returned an error." });
+    console.error("claude api error", err?.status, err?.name, err?.message);
+    return res.status(502).json({ code: "server_error", message: "The AI service returned an error.", status: err?.status ?? null });
   }
 }
 
-export const config = { maxDuration: 120 };
+export const config = { maxDuration: 60 };
