@@ -1,0 +1,10 @@
+{
+  "name": "aiboothstudio",
+  "private": true,
+  "type": "module",
+  "description": "AI Booth Design: landing site and 3D trade show booth designer",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest"
+  }
+}

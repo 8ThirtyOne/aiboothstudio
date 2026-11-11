@@ -1,0 +1,54 @@
+// POST /api/claude — the app's AI features (AI Build, photo to 3D, prompt writing) call Claude through here.
+// Needs ANTHROPIC_API_KEY set in the hosting provider's environment settings. The key never reaches the browser.
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic(); // reads ANTHROPIC_API_KEY from the environment
+const MODEL = "claude-opus-5-5";
+const MAX_IMAGES = 4;
+const MAX_PROMPT_CHARS = 60_000;
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ code: "method_not_allowed", message: "Use POST." });
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ code: "not_configured", message: "AI features aren't set up on this server yet." });
+
+  const { input, images = [], tier = "default" } = req.body || {};
+  const messages = Array.isArray(input) ? input : [{ role: "user", content: String(input || "") }];
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== "user" || typeof last.content !== "string" || !last.content.trim()) {
+    return res.status(400).json({ code: "bad_request", message: "Send a prompt." });
+  }
+  if (JSON.stringify(messages).length > MAX_PROMPT_CHARS) return res.status(413).json({ code: "too_large", message: "That request is too long." });
+  if (!Array.isArray(images) || images.length > MAX_IMAGES) return res.status(400).json({ code: "bad_request", message: `Send at most ${MAX_IMAGES} images.` });
+
+  // Images ride along with the final user message, ahead of its text.
+  const finalContent = [
+    ...images.map(data => ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: String(data) } })),
+    { type: "text", text: last.content },
+  ];
+  const apiMessages = [...messages.slice(0, -1), { role: "user", content: finalContent }];
+
+  try {
+    const response = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 16000,
+      messages: apiMessages,
+      output_config: { effort: tier === "complex" ? "high" : "medium" },
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+    });
+    if (response.stop_reason === "refusal") {
+      return res.status(422).json({ code: "refused", message: "The AI declined this request. Try rewording it." });
+    }
+    const text = response.content.filter(b => b.type === "text").map(b => b.text).join("");
+    return res.status(200).json({ text, truncated: response.stop_reason === "max_tokens" });
+  } catch (err) {
+    if (err instanceof Anthropic.RateLimitError) return res.status(429).json({ code: "rate_limited", message: "The AI is busy. Try again in a moment." });
+    if (err instanceof Anthropic.AuthenticationError) return res.status(503).json({ code: "not_configured", message: "The AI service key is invalid." });
+    if (err instanceof Anthropic.BadRequestError) return res.status(400).json({ code: "bad_request", message: "The AI couldn't read that request." });
+    if (err instanceof Anthropic.APIConnectionError) return res.status(502).json({ code: "network", message: "Couldn't reach the AI service." });
+    console.error("claude api error", err?.status, err?.message);
+    return res.status(502).json({ code: "server_error", message: "The AI service returned an error." });
+  }
+}
+
+export const config = { maxDuration: 120 };

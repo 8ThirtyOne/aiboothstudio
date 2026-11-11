@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AI Booth Design</title>
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<script src="/js/claude-shim.js"></script>
+</head>
+<body>
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Design trade show booths in 3D, rebuild them from a photo, and export renders, models and specs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Momo+Trust+Display&family=IBM+Plex+Mono:wght@500&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Layout: full-bleed render hero, then a floor-plan rhythm — sections read like booth plots on a hall map, with ft / m dimensions as real content */
+:root {
+  --eyebrow: #2563eb;
+  --logo-blue: #000;
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #111722;
+  --muted: #5b6474;
+  --line: #e1e5ec;
+  --accent: #2563eb;
+  --signal: #f26b1d;
+  --carpet: #0f5c7a;
+  --tint: #e9f0fd;
+  --hero-ink: #f4f7fb;
+  --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --wrap: 1160px;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --eyebrow: #669dff;
+    --logo-blue: #669dff;
+    --bg: #0d1118; --surface: #151b25; --ink: #e9edf4; --muted: #98a2b3; --line: #252d3a;
+    --accent: #5b8dff; --signal: #ff8a4a; --carpet: #2f8fb0; --tint: #17233d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] { --eyebrow: #669dff; --logo-blue: #669dff;
+  --bg: #0d1118; --surface: #151b25; --ink: #e9edf4; --muted: #98a2b3; --line: #252d3a;
+  --accent: #5b8dff; --signal: #ff8a4a; --carpet: #2f8fb0; --tint: #17233d; color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+p { font-weight: 500; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+h1, h2, h3 { font-family: "Momo Trust Display", var(--font-display); font-weight: 400; line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -.02em; }
+p { margin: 0; }
+.wrap { max-width: var(--wrap); margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+/* Nav */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: #0b0f16; }
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: rgba(0, 0, 0, .85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,.08); }
+.nav .wrap { display: flex; align-items: center; gap: 24px; padding-block: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--hero-ink); text-decoration: none; font: 800 18px var(--font-display); letter-spacing: -.01em; }
+.brand-mark { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); display: grid; place-items: center; }
+.logo { display: block; flex: none; }
+.logo .lg-k { fill: currentColor; }
+.logo .lg-b { fill: var(--logo-blue); }
+.brand .logo { width: 32px; height: 32px; --logo-blue: #669dff; }
+.foot-brand { display: inline-flex; align-items: center; gap: 10px; }
+.foot-brand .logo { width: 22px; height: 22px; color: var(--ink); }
+.nav-links { display: flex; gap: 22px; margin-left: auto; }
+.nav-links a { color: rgba(244,247,251,.75); text-decoration: none; font-size: 14px; font-weight: 700; padding-right: 8pt; }
+.nav-links a:hover { color: #fff; }
+.nav-signin { color: rgba(244,247,251,.85); text-decoration: none; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.nav-signin:hover { color: #fff; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 11px 20px 13px; font: 700 15px var(--font-body); text-decoration: none; transition: transform .15s, background .15s, box-shadow .15s; white-space: nowrap; }
+.btn-primary:hover { background: color-mix(in srgb, var(--accent) 86%, #000); }
+.btn-ai:hover { background: color-mix(in srgb, var(--signal) 88%, #000); }
+.btn-line:hover { background: var(--tint); }
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 8px 22px rgba(37, 99, 235, .35); }
+.btn-ai { background: var(--signal); color: #fff; box-shadow: 0 8px 22px rgba(242, 107, 29, .3); }
+.btn-ghost { color: var(--hero-ink); border: 1px solid rgba(255,255,255,.28); }
+.btn-ghost:hover { background: rgba(255,255,255,.08); }
+.btn-line { color: var(--ink); border: 1px solid var(--line); background: var(--surface); }
+
+/* Hero */
+.hero { position: relative; margin-top: -70px; background: #0b0f16; color: var(--hero-ink); overflow: hidden; min-height: calc(70px + clamp(520px, 58vw, 760px)); display: flex; align-items: center; }
+.hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; }
+.hero::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(8,11,17,.94) 0%, rgba(8,11,17,.86) 32%, rgba(8,11,17,.52) 58%, rgba(8,11,17,.18) 100%),
+    linear-gradient(180deg, rgba(8,11,17,.35) 0%, rgba(8,11,17,0) 30%, rgba(8,11,17,0) 70%, rgba(8,11,17,.6) 100%); }
+.hero-copy { position: relative; z-index: 2; width: 100%; padding-block: calc(70px + clamp(56px, 8vw, 110px)) clamp(56px, 8vw, 110px); }
+.eyebrow { font: 500 12px/1.2 "IBM Plex Mono", var(--font-mono); letter-spacing: .25em; text-transform: uppercase; color: var(--eyebrow); }
+.hero .eyebrow { color: #669dff; }
+.hero h1 { line-height: 1; font-size: clamp(32px, 5.6vw, 73px); font-weight: 400; margin-top: 14px; max-width: 13ch; }
+.hero h1 em { font-style: normal; color: #669dff; }
+.hero .lede { margin-top: 18px; max-width: 52ch; font-family: "Bricolage Grotesque", var(--font-body); font-weight: 500; font-size: 18px; line-height: 1.5; color: rgba(244,247,251,.82); }
+.hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+.hero-tag { position: absolute; z-index: 2; right: max(20px, env(safe-area-inset-right, 0px)); bottom: 20px; font: 400 11px var(--font-mono); color: rgba(244,247,251,.8); background: rgba(8,11,17,.6); border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 6px 12px; }
+
+/* Systems strip */
+.strip { border-bottom: 1px solid var(--line); background: var(--surface); }
+.strip .wrap { display: flex; align-items: center; gap: 18px 28px; flex-wrap: wrap; padding-block: 20px; }
+.strip-label { font: 500 11px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.strip ul { list-style: none; display: flex; flex-wrap: wrap; gap: 10px 24px; margin: 0; padding: 0; }
+.strip li { font-weight: 700; font-size: 15px; }
+
+section { padding-block: clamp(64px, 9vw, 112px); }
+.sec-head { display: grid; gap: 12px; max-width: 680px; margin-bottom: 40px; }
+.sec-head h2 { font-size: clamp(30px, 6vw, 44px); line-height: 1.2; }
+.sec-head p { color: var(--muted); font-size: 17px; }
+
+/* Features */
+.features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.feature { background: var(--surface); padding: 28px 26px 30px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.feature h3 { font-size: 21px; }
+.feature p { color: var(--muted); font-size: 15px; }
+.feature .icon { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; background: var(--tint); color: var(--accent); }
+.feature.ai .icon { background: color-mix(in srgb, var(--signal) 16%, transparent); color: var(--signal); }
+.feature .spec { font: 400 12px var(--font-mono); color: var(--muted); margin-top: 4px; }
+
+/* App preview */
+.preview { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
+.browser { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); box-shadow: 0 30px 70px -30px rgba(17, 23, 34, .45); }
+.browser-bar { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.browser-bar span { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.checklist { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 14px; }
+.checklist li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; color: var(--muted); }
+.checklist strong { color: var(--ink); display: block; }
+.tick { width: 22px; height: 22px; border-radius: 50%; background: var(--tint); color: var(--accent); display: grid; place-items: center; margin-top: 2px; }
+
+/* Steps */
+.steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; counter-reset: step; }
+.step { border-top: 2px solid var(--ink); padding-top: 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.step-n { font: 500 12px var(--font-mono); color: var(--accent); letter-spacing: .1em; }
+.step h3 { font-size: 20px; }
+.step .tool { font: 400 12px var(--font-mono); color: var(--accent); }
+.strip-flow li + li::before { content: "→"; margin-right: 24px; color: var(--muted); font-weight: 400; }
+.strip-flow ul { gap: 10px 24px; }
+.strip-flow li { font-family: "Momo Trust Display", var(--font-display); font-weight: 400; font-size: 16px; }
+.step p { color: var(--muted); font-size: 15px; }
+
+/* Booth types */
+.types { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.type { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 22px; display: grid; gap: 12px; min-width: 0; }
+.type svg { width: 100%; height: auto; max-width: 160px; color: var(--carpet); }
+.type h3 { font-size: 20px; }
+.type .meta { font: 400 12px var(--font-mono); color: var(--muted); }
+.type p { color: var(--muted); font-size: 14px; }
+
+/* Gallery */
+.gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.shot { margin: 0; border-radius: var(--r); overflow: hidden; background: #0b0f16; position: relative; }
+.shot img { width: 100%; aspect-ratio: 7 / 5; object-fit: cover; }
+.shot-cap { position: absolute; left: 14px; bottom: 14px; font: 500 12px var(--font-mono); color: #f4f7fb; background: rgba(11,15,22,.62); border-radius: 999px; padding: 5px 11px; }
+.shot { display: block; color: inherit; text-decoration: none; }
+.shot img { transition: transform .4s, opacity .2s; }
+.shot:hover img { transform: scale(1.03); }
+.shot-go { position: absolute; right: 14px; bottom: 14px; font: 600 12px var(--font-body); color: #fff; background: var(--accent); border-radius: 999px; padding: 5px 12px; opacity: 0; transition: opacity .2s; }
+.shot:hover .shot-go, .shot:focus-visible .shot-go { opacity: 1; }
+@media (hover: none) { .shot-go { opacity: 1; } }
+
+/* Sizes */
+.sizes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.size-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 24px; min-width: 0; }
+.size-card h3 { font-size: 20px; margin-bottom: 4px; }
+.size-card .sub { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+.size-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.size-chip { border: 1px solid var(--line); border-radius: 10px; padding: 10px 8px; text-align: center; font: 700 15px var(--font-mono); font-variant-numeric: tabular-nums; }
+.size-chip small { display: block; font-size: 11px; color: var(--muted); }
+a.size-chip { color: var(--ink); text-decoration: none; transition: border-color .15s, background .15s, color .15s; }
+a.size-chip:hover { border-color: var(--accent); background: var(--tint); color: var(--accent); }
+.size-custom { grid-column: 1 / -1; font-family: var(--font-body); }
+
+/* FAQ */
+.faq { display: grid; gap: 0; border-top: 1px solid var(--line); max-width: 820px; }
+.faq details { border-bottom: 1px solid var(--line); padding: 18px 0; }
+.faq summary { cursor: pointer; list-style: none; font: 700 18px var(--font-display); display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-weight: 500; color: var(--accent); }
+.faq details[open] summary::after { content: "–"; }
+.faq details p { color: var(--muted); margin-top: 10px; max-width: 65ch; }
+
+/* CTA band */
+.cta { background: var(--carpet); color: #f4f7fb; border-radius: 22px; padding: clamp(36px, 6vw, 64px); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; position: relative; overflow: hidden; }
+.cta::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px); background-size: 28px 28px; pointer-events: none; }
+.cta > * { position: relative; }
+.cta h2 { font-size: clamp(30px, 6vw, 44px); line-height: 1.2; }
+.cta p { color: rgba(244,247,251,.82); margin-top: 10px; max-width: 52ch; }
+.cta .btns { display: flex; gap: 12px; flex-wrap: wrap; }
+.cta .btn-white { background: #fff; color: #0f3c52; }
+.cta .btn-white:hover { background: #e9eef8; }
+
+footer { padding-block: 36px; color: var(--muted); font-size: 13px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+@media (max-width: 960px) {
+  .features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .types { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .preview { grid-template-columns: 1fr; }
+}
+.real { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
+.real-item { margin: 0; border-radius: var(--r); overflow: hidden; background: #0b0f16; border: 1px solid var(--line); display: grid; grid-template-rows: 1fr auto; min-width: 0; }
+.real-item img, .real-item video { width: 100%; height: 100%; min-height: 0; object-fit: cover; display: block; aspect-ratio: 16 / 9; }
+.real-item figcaption { display: grid; gap: 4px; padding: 14px 16px; background: var(--bg); color: var(--muted); font-size: 14px; }
+.real-tag { font: 500 12px/1.2 "IBM Plex Mono", var(--font-mono); letter-spacing: .18em; text-transform: uppercase; color: var(--eyebrow); }
+.real-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
+.real-steps div { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 600; min-width: 0; }
+.real-steps b { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font: 700 14px var(--font-body); }
+.step-link { font: inherit; font-weight: 600; color: var(--accent); text-decoration: none; }
+.step-link:hover { text-decoration: underline; }
+@media (max-width: 860px) { .real, .real-steps { grid-template-columns: minmax(0, 1fr); } }
+.plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
+.plan { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 28px 24px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.plan.featured { border: 2px solid var(--accent); box-shadow: 0 30px 70px -40px rgba(37, 99, 235, .55); }
+.plan-badge { position: absolute; top: -12px; left: 24px; font: 500 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; background: var(--accent); color: #fff; border-radius: 999px; padding: 5px 10px; }
+.plan h3 { font-size: 22px; }
+.plan-for { color: var(--muted); font-size: 14px; margin: 6px 0 0; }
+.plan-price { display: flex; align-items: baseline; gap: 6px; }
+.plan-price b { font: 400 48px/1 var(--font-display); letter-spacing: -.02em; }
+.plan-price span { color: var(--muted); font-size: 14px; }
+.plan-unit { font: 400 12px var(--font-mono); color: var(--muted); margin-top: -10px; }
+.plan-credits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.credit { background: var(--tint); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
+.credit b { font: 400 26px/1 var(--font-display); color: var(--accent); }
+.credit span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.plans-topup { color: var(--muted); font-size: 14px; text-align: center; margin-top: 10px; }
+.plan ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 15px; }
+.plan li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; }
+.plan li::before { content: "✓"; color: var(--accent); font-weight: 700; }
+.plan .btn { justify-content: center; margin-top: auto; }
+.plan-note { font-size: 13px; color: var(--muted); min-height: 1em; margin: -8px 0 0; }
+.plans-foot { color: var(--muted); font-size: 14px; text-align: center; margin-top: 26px; }
+@media (max-width: 860px) { .plans { grid-template-columns: minmax(0, 1fr); max-width: 460px; margin-inline: auto; } }
+.contact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 40px; align-items: start; }
+.contact-form { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 26px; display: grid; gap: 16px; min-width: 0; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.field label { font: 500 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.field input, .field select, .field textarea { font: 15px var(--font-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; width: 100%; box-sizing: border-box; }
+.field textarea { min-height: 130px; resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+.contact-form .btn { justify-self: start; border: 0; cursor: pointer; }
+.contact-form .btn[disabled] { opacity: .55; cursor: default; }
+.form-status { font-size: 14px; color: var(--muted); margin: 0; min-height: 1.4em; }
+.form-status.ok { color: var(--accent); }
+.contact-aside { display: grid; gap: 14px; color: var(--muted); }
+.contact-aside p { margin: 0; }
+@media (max-width: 860px) { .contact { grid-template-columns: minmax(0, 1fr); gap: 24px; } .field-row { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 680px) {
+  .nav-links { display: none; }
+  .nav-signin { margin-left: auto; }
+  .nav .btn { margin-left: 0; padding: 9px 16px 11px; }
+  .hero { min-height: 620px; align-items: flex-start; }
+  .hero-img { object-position: 70% 50%; }
+  .hero::after { background: linear-gradient(180deg, rgba(8,11,17,.94) 0%, rgba(8,11,17,.82) 55%, rgba(8,11,17,.55) 100%); }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .features, .types, .gallery, .sizes { grid-template-columns: 1fr; }
+  .cta { grid-template-columns: 1fr; }
+  .hero-tag { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .shot img { transition: none; } .shot:hover img { transform: none; } }
+</style>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="AI Booth Design home">
+      <svg class="logo" viewBox="13 16 156 150" aria-hidden="true"><path class="lg-b" d="M128.6 61 81.6 45.8V23.5l73.5 27z"/><path class="lg-b" d="M71.9,141.9V23.5L25.8,58.3l-9.5,104,1.5-.5c15.2-9.9,33.5-16.8,53.6-19.6l.6-.2Z"/><path class="lg-b" d="M160,56.6l-34.9,12.9v73.8c15.6,3,30,8.5,42.5,15.9l-7.6-102.6Z"/></svg>
+
+
+
+
+
+      AI Booth Design
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#how">Workflow</a>
+      <a href="#features">Features</a>
+      <a href="#types">Booth Types</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="nav-signin" href="/app/#signin">Sign In</a>
+    <a class="btn btn-primary" href="/app/">Design Your Booth</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title" style="padding:0">
+    <video class="hero-img" src="img/hero.mp4" poster="img/hero-concept.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+    <div class="hero-copy">
+      <div class="wrap">
+        <div class="eyebrow">AI trade show booth design · start to finish</div>
+        <h1 id="hero-title">Showcase your booth vision <em>with ease</em></h1>
+        <p class="lede">The only AI tool that takes your trade show booth from a blank floor to an ultra-realistic image or video clip. Describe your idea, shape it in 3D, add your brand, then see the finished booth before anything is built.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="/app/">Start Designing</a>
+          <a class="btn btn-ghost" href="#how">See The Workflow</a>
+        </div>
+      </div>
+    </div>
+      </section>
+
+  <div class="strip strip-flow">
+    <div class="wrap">
+      <span class="strip-label">One workflow</span>
+      <ul>
+        <li>Idea</li><li>3D layout</li><li>Brand</li><li>Render</li><li>Photo-realistic image &amp; video</li>
+      </ul>
+    </div>
+  </div>
+
+  <section id="how" style="background:var(--surface);border-block:1px solid var(--line)">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">The workflow</div>
+        <h2>From blank floor to finished booth, visualized in one place.</h2>
+        <p>Other tools stop at a floor plan or start from a finished render. AI Booth Design covers every step in between, so you go from an idea to a photo-realistic visual without switching apps or waiting on a 3D artist.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-n">STEP 1</div><h3>Describe it</h3><p>Type what you want or add reference photos. AI picks the size, walls, floor, colors and furniture.</p><div class="tool">AI Build · photo to 3D</div></div>
+        <div class="step"><div class="step-n">STEP 2</div><h3>Shape it in 3D</h3><p>Click anything to move, resize or swap it. Choose the booth type and construction system.</p><div class="tool">53-item library · real sizes</div></div>
+        <div class="step"><div class="step-n">STEP 3</div><h3>Brand it</h3><p>Drop in your logo, artwork, fonts and colors. Light it the way the show floor will.</p><div class="tool">Graphics · lighting · materials</div></div>
+        <div class="step"><div class="step-n">STEP 4</div><h3>Render it</h3><p>Walk the aisle at eye level among visitors and save a 4K render from any angle.</p><div class="tool">4K renders · plan and side views</div></div>
+        <div class="step"><div class="step-n">STEP 5</div><h3>Make it real</h3><p>Generate an ultra-realistic image or video clip of the finished booth right in the app, using your render as the reference.</p><div class="tool">Photo-realistic image · video · in-app · <a class="step-link" href="#step5">See examples ↓</a></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Under the hood</div>
+        <h2>AI at every step, and easy enough for anyone.</h2>
+        <p>No CAD skills, no 3D artist, no installs. One browser tab replaces the back-and-forth between your exhibit house, your designer and your render studio.</p>
+      </div>
+      <div class="features">
+        <article class="feature ai">
+          <div class="icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></div>
+          <h3>AI build from a sentence</h3>
+          <p>Describe the booth, drop in up to four reference images, and Claude picks the size, walls, floor, colors and furniture for you.</p>
+          <div class="spec">“A 20×30 corner booth for a coffee brand”</div>
+        </article>
+        <article class="feature ai">
+          <div class="icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-5-9 8"/></svg></div>
+          <h3>Photo to 3D</h3>
+          <p>Upload a photo of an existing booth. Claude reads the layout and rebuilds it as editable 3D geometry at the size you choose.</p>
+          <div class="spec">Then refine it against the photo</div>
+        </article>
+        <article class="feature">
+          <div class="icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div>
+          <h3>A library of 53 items</h3>
+          <p>Counters, podiums, stools, screens, video walls, lighting, plants, a display car, stages, meeting rooms and hanging signs, all at real size.</p>
+          <div class="spec">11 categories · searchable</div>
+        </article>
+        <article class="feature">
+          <div class="icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 19l4-1 10-10-3-3L6 15z"/><path d="M14 6l3 3"/></svg></div>
+          <h3>Edit anything you click</h3>
+          <p>Select any wall or piece to move, resize, rotate or recolor it, cut a walk-through opening, add an overhang or place your own artwork and fonts.</p>
+          <div class="spec">Drag on the floor · double-click to rotate</div>
+        </article>
+        <article class="feature">
+          <div class="icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17L17 3l4 4L7 21H3z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></div>
+          <h3>Measure and spec it</h3>
+          <p>Show sizes on every item, measure between any two points, and get weight, power draw, setup time and a components list.</p>
+          <div class="spec">Feet or meters · plan, side and eye-level views</div>
+        </article>
+        <article class="feature">
+          <div class="icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></div>
+          <h3>Photo-realistic images and video</h3>
+          <p>Turn your render into an ultra-realistic image or video clip without leaving the app. Every pass includes AI image and video credits.</p>
+          <div class="spec">Also exports 4K PNG · GLB model · specs</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap preview">
+      <div class="browser">
+        <div class="browser-bar" aria-hidden="true"><span></span><span></span><span></span></div>
+        <img src="img/app-ui.jpg" width="800" height="500" alt="The AI Booth Design editor, with booth setup options on the left and a selected podium showing its size in the 3D view">
+      </div>
+      <div>
+        <div class="eyebrow">The editor</div>
+        <h2 style="font-size:clamp(30px,6vw,44px);line-height:1.2;margin-top:12px">Easy click-drag/edit for anything you want to change.</h2>
+        <ul class="checklist">
+          <li><span class="tick" aria-hidden="true">✓</span><span><strong>Pick a booth and a system</strong>Inline, corner, peninsula or island, in stretch fabric, aluminum frame, timber or a pop-up canopy.</span></li>
+          <li><span class="tick" aria-hidden="true">✓</span><span><strong>See it in context</strong>Walk the aisles at eye level, among neighboring booths and visitors.</span></li>
+          <li><span class="tick" aria-hidden="true">✓</span><span><strong>Save and share designs</strong>Keep designs in your browser or as a file you can send to anyone.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="types">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Booth types</div>
+        <h2>Every floor plot, from inline to island.</h2>
+        <p>The app adds the right walls for each type. Corner booths let you choose which side gets the partition.</p>
+      </div>
+      <div class="types">
+        <article class="type">
+          <svg viewBox="0 0 160 110" aria-hidden="true"><rect x="12" y="12" width="136" height="86" rx="4" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="4 4"/><path d="M12 98V12h136v86" fill="none" stroke="currentColor" stroke-width="7"/></svg>
+          <h3>Inline</h3><div class="meta">1 open side · back + 2 partitions</div>
+          <p>The classic 10 × 10 or 10 × 20 in a row of exhibitors.</p>
+        </article>
+        <article class="type">
+          <svg viewBox="0 0 160 110" aria-hidden="true"><rect x="12" y="12" width="136" height="86" rx="4" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="4 4"/><path d="M12 98V12h136" fill="none" stroke="currentColor" stroke-width="7"/></svg>
+          <h3>Corner</h3><div class="meta">2 open sides · left or right partition</div>
+          <p>End of a row, open to two aisles.</p>
+        </article>
+        <article class="type">
+          <svg viewBox="0 0 160 110" aria-hidden="true"><rect x="12" y="12" width="136" height="86" rx="4" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="4 4"/><path d="M12 12h136" fill="none" stroke="currentColor" stroke-width="7"/></svg>
+          <h3>Peninsula</h3><div class="meta">3 open sides · back wall only</div>
+          <p>Backs onto one neighbor, open to three aisles.</p>
+        </article>
+        <article class="type">
+          <svg viewBox="0 0 160 110" aria-hidden="true"><rect x="12" y="12" width="136" height="86" rx="4" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="4 4"/><path d="M58 55h44" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="80" cy="55" r="22" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3"/></svg>
+          <h3>Island</h3><div class="meta">4 open sides · center wall + hanging sign</div>
+          <p>Free-standing, visible from every aisle.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Step 4 output</div>
+        <h2>Renders straight out of AI Booth Design.</h2>
+        <p>From the simple starter you get at every size to fully custom concepts, these were rendered straight out of the app without retouching. Select any one to open that exact design and make it your own. Step 5 then turns your render into photo-realistic images and video.</p>
+      </div>
+      <div class="gallery">
+        <a class="shot" href="/app/#size-10x10" aria-label="Open the 10 × 10 ft starter design in the app"><img src="img/g-10x10.jpg" width="1200" height="857" loading="lazy" alt="10 × 10 ft starter booth: one back wall, counter, bar table and stools, brochure rack"><span class="shot-cap">10 × 10 ft starter</span><span class="shot-go">Open this design →</span></a>
+        <a class="shot" href="/app/#design-demo" aria-label="Open the product demo design in the app"><img src="img/g-demo.jpg" width="1200" height="857" loading="lazy" alt="Inline product demo booth with a video wall, demo desk, plinths and a light truss"><span class="shot-cap">Product demo · video wall · 10 × 20 ft</span><span class="shot-go">Open this design →</span></a>
+        <a class="shot" href="/app/#design-island" aria-label="Open the island tower design in the app"><img src="img/g-island.jpg" width="1200" height="857" loading="lazy" alt="Purple island booth with a center wall, ring sign overhead, coffee bar, stools and a digital totem"><span class="shot-cap">Island tower · coffee bar · 20 × 20 ft</span><span class="shot-go">Open this design →</span></a>
+        <a class="shot" href="/app/#design-flagship" aria-label="Open the flagship island design in the app"><img src="img/g-flagship.jpg" width="1200" height="857" loading="lazy" alt="Large island booth with a display car, stage, meeting room and hanging sign"><span class="shot-cap">Flagship island · display car · 30 × 30 ft</span><span class="shot-go">Open this design →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="step5" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Step 5 output</div>
+        <h2 style="font-size:clamp(30px,6vw,44px);line-height:1.2">From render to the real thing.</h2>
+        <p>Step 5 takes your finished render and turns it into an ultra-realistic image or video clip of the booth as it will look on the show floor. Use them to win client sign-off, brief your exhibit house and promote your booth before the doors open.</p>
+      </div>
+      <div class="real">
+        <figure class="real-item real-img">
+          <img src="img/step5.jpg" width="1672" height="941" loading="lazy" alt="Photo-realistic corner booth in white and green with an LED-edged canopy, a backlit lab graphic wall, a side tower with a screen and an illuminated reception counter">
+          <figcaption><span class="real-tag">Photo-realistic image</span><span>Lighting, materials and show-floor context, ready for a client deck.</span></figcaption>
+        </figure>
+        <figure class="real-item real-vid">
+          <video src="img/hero.mp4" poster="img/hero-concept.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Video clip of a photo-realistic booth with visitors walking past"></video>
+          <figcaption><span class="real-tag">Video clip</span><span>A 5 to 10 second walk-by with visitors, for social posts and pitches.</span></figcaption>
+        </figure>
+      </div>
+      <div class="real-steps">
+        <div><b>1</b><span>Frame your view in the 3D editor</span></div>
+        <div><b>2</b><span>Add art direction, or keep the default</span></div>
+        <div><b>3</b><span>Click Generate and use one credit</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:var(--surface);border-block:1px solid var(--line)">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Standard sizes</div>
+        <h2>US and international stand sizes built in.</h2>
+        <p>Switch to meters and the size options change to European and Asian stand standards. Any custom size works too.</p>
+      </div>
+      <div class="sizes">
+        <div class="size-card">
+          <h3>Feet</h3><p class="sub">Depth × width, as US shows list them. Select a size to open its starter design.</p>
+          <div class="size-grid">
+            <a class="size-chip" href="/app/#size-10x10" aria-label="Design a 10 × 10 feet booth">10 × 10<small>100 ft²</small></a><a class="size-chip" href="/app/#size-10x20" aria-label="Design a 10 × 20 feet booth">10 × 20<small>200 ft²</small></a><a class="size-chip" href="/app/#size-10x30" aria-label="Design a 10 × 30 feet booth">10 × 30<small>300 ft²</small></a>
+            <a class="size-chip" href="/app/#size-20x20" aria-label="Design a 20 × 20 feet booth">20 × 20<small>400 ft²</small></a><a class="size-chip" href="/app/#size-20x30" aria-label="Design a 20 × 30 feet booth">20 × 30<small>600 ft²</small></a><a class="size-chip" href="/app/#size-20x40" aria-label="Design a 20 × 40 feet booth">20 × 40<small>800 ft²</small></a>
+            <a class="size-chip" href="/app/#size-30x30" aria-label="Design a 30 × 30 feet booth">30 × 30<small>900 ft²</small></a><a class="size-chip" href="/app/#size-30x40" aria-label="Design a 30 × 40 feet booth">30 × 40<small>1,200 ft²</small></a><a class="size-chip" href="/app/#size-40x40" aria-label="Design a 40 × 40 feet booth">40 × 40<small>1,600 ft²</small></a>
+            <a class="size-chip size-custom" href="/app/#size-custom" aria-label="Design a custom size booth in feet">Custom size<small>Enter any depth × width in feet</small></a>
+          </div>
+        </div>
+        <div class="size-card">
+          <h3>Meters</h3><p class="sub">Shell scheme and raw space, depth × width. Select a size to open its starter design.</p>
+          <div class="size-grid">
+            <a class="size-chip" href="/app/#size-m2x3" aria-label="Design a 2 × 3 meters booth">2 × 3<small>6 m²</small></a><a class="size-chip" href="/app/#size-m3x3" aria-label="Design a 3 × 3 meters booth">3 × 3<small>9 m²</small></a><a class="size-chip" href="/app/#size-m3x4" aria-label="Design a 3 × 4 meters booth">3 × 4<small>12 m²</small></a>
+            <a class="size-chip" href="/app/#size-m3x5" aria-label="Design a 3 × 5 meters booth">3 × 5<small>15 m²</small></a><a class="size-chip" href="/app/#size-m3x6" aria-label="Design a 3 × 6 meters booth">3 × 6<small>18 m²</small></a><a class="size-chip" href="/app/#size-m3x9" aria-label="Design a 3 × 9 meters booth">3 × 9<small>27 m²</small></a>
+            <a class="size-chip" href="/app/#size-m4x6" aria-label="Design a 4 × 6 meters booth">4 × 6<small>24 m²</small></a><a class="size-chip" href="/app/#size-m6x6" aria-label="Design a 6 × 6 meters booth">6 × 6<small>36 m²</small></a><a class="size-chip" href="/app/#size-m6x9" aria-label="Design a 6 × 9 meters booth">6 × 9<small>54 m²</small></a>
+            <a class="size-chip" href="/app/#size-m6x12" aria-label="Design a 6 × 12 meters booth">6 × 12<small>72 m²</small></a><a class="size-chip" href="/app/#size-m9x9" aria-label="Design a 9 × 9 meters booth">9 × 9<small>81 m²</small></a><a class="size-chip" href="/app/#size-m9x12" aria-label="Design a 9 × 12 meters booth">9 × 12<small>108 m²</small></a>
+            <a class="size-chip" href="/app/#size-m12x12" aria-label="Design a 12 × 12 meters booth">12 × 12<small>144 m²</small></a>
+            <a class="size-chip size-custom" href="/app/#size-mcustom" aria-label="Design a custom size booth in meters">Custom size<small>Enter any depth × width in meters</small></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Pricing</div>
+        <h2>Pricing for end-to-end AI booth designs</h2>
+        <p>One-time passes, no subscription. Buy a week to pitch a single booth, or a year if you design for every show on the calendar.</p>
+      </div>
+      <div class="plans">
+        <article class="plan">
+          <div><h3>1 Week Pass</h3><p class="plan-for">One booth, one pitch</p></div>
+          <div class="plan-price"><b>$99</b><span>one time</span></div>
+          <div class="plan-unit">7 days of full access</div>
+          <div class="plan-credits"><div class="credit"><b>3</b><span>AI images</span></div><div class="credit"><b>1</b><span>AI video</span></div></div>
+          <ul>
+            <li>Every booth type, size and construction system</li>
+            <li>AI Build and photo reconstruction</li>
+            <li>Photo-realistic images and video, generated in the app</li>
+            <li>Unlimited saved designs</li>
+          </ul>
+          <a class="btn btn-line" href="#pricing" data-plan="week">Buy 1 Week</a>
+          <p class="plan-note" aria-live="polite"></p>
+        </article>
+        <article class="plan featured">
+          <span class="plan-badge">Most Popular</span>
+          <div><h3>1 Month Pass</h3><p class="plan-for">A full show cycle</p></div>
+          <div class="plan-price"><b>$199</b><span>one time</span></div>
+          <div class="plan-unit">30 days · about $6.63 / day</div>
+          <div class="plan-credits"><div class="credit"><b>6</b><span>AI images</span></div><div class="credit"><b>2</b><span>AI videos</span></div></div>
+          <ul>
+            <li>Everything in the week pass</li>
+            <li>Time for client revisions and sign-off</li>
+            <li>AI art direction for variations</li>
+            <li>Full library for every design</li>
+          </ul>
+          <a class="btn btn-primary" href="#pricing" data-plan="month">Buy 1 Month</a>
+          <p class="plan-note" aria-live="polite"></p>
+        </article>
+        <article class="plan">
+          <div><h3>1 Year Pass</h3><p class="plan-for">For agencies and exhibit houses</p></div>
+          <div class="plan-price"><b>$399</b><span>one time</span></div>
+          <div class="plan-unit">365 days · about $33 / month</div>
+          <div class="plan-credits"><div class="credit"><b>30</b><span>AI images</span></div><div class="credit"><b>8</b><span>AI videos</span></div></div>
+          <ul>
+            <li>Everything in the month pass</li>
+            <li>Design for every show of the year</li>
+            <li>New features as they ship</li>
+            <li>Priority email support</li>
+          </ul>
+          <a class="btn btn-line" href="#pricing" data-plan="year">Buy 1 Year</a>
+          <p class="plan-note" aria-live="polite"></p>
+        </article>
+      </div>
+      <p class="plans-foot">After checkout, sign in to the app with the same email to unlock your pass and credits. No password needed: we email you a sign-in link.</p>
+      <p class="plans-foot">Passes don't renew automatically. Prices in USD.</p>
+      <p class="plans-topup">Need more? Top up anytime: 5 extra images for $19, or 1 extra video for $15.</p>
+    </div>
+  </section>
+  <script>
+    // Paste each plan's checkout link (Stripe Payment Link, Lemon Squeezy, etc.) here
+    const CHECKOUT = { week: '', month: '', year: '' };
+    document.querySelectorAll('[data-plan]').forEach(a => {
+      const url = CHECKOUT[a.dataset.plan];
+      if (url) { a.href = url; a.target = '_blank'; a.rel = 'noopener'; return; }
+      a.addEventListener('click', e => { e.preventDefault(); a.nextElementSibling.textContent = 'Checkout opens soon.'; });
+    });
+  </script>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">FAQ</div>
+        <h2>Questions exhibitors ask.</h2>
+      </div>
+      <div class="faq">
+        <details><summary>Do I need to install anything?</summary><p>No. AI Booth Design runs in your web browser on a laptop or desktop. It works on a phone too, though a larger screen is easier for detailed editing.</p></details>
+        <details><summary>How do the AI features work?</summary><p>The AI build, photo-to-3D rebuild and prompt writer use Claude through your own Claude account. The first time you use one, the page asks for your permission, and each request uses some of your Claude usage.</p></details>
+        <details><summary>How do I get the ultra-realistic image or video?</summary><p>Once your booth is designed, click Generate. AI uses your render and your art direction to create a photo-realistic image or a short video clip of the finished booth, right in the app. Each pass includes credits: 3 images and 1 video for a week, 6 images and 2 videos for a month, or 30 images and 8 videos for a year. You can top up anytime.</p></details>
+        <details><summary>Do I need design or 3D experience?</summary><p>No. You can start from a sentence or a photo, and change anything by clicking it. Every step is guided, from the first layout to the final photo-realistic visual.</p></details>
+        <details><summary>What can I give my exhibit house?</summary><p>A 4K render, a GLB 3D model that opens in Blender, SketchUp, 3ds Max and similar tools, and a specs file with dimensions, materials, weight, power and crew estimates. Have them confirm dimensions before building.</p></details>
+        <details><summary>Do I need an account?</summary><p>Yes, once you buy a pass. Sign in with the email you used at checkout and we'll send you a one-time sign-in link, so there's no password to remember. Your account holds your pass, your remaining image and video credits, and your generated images and videos.</p></details>
+        <details><summary>Where are my designs saved?</summary><p>Designs save in your browser, and you can also save any design as a small file to open on another computer or send to a colleague. Uploaded photos, artwork and fonts aren’t stored in saved designs.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" style="background:var(--surface);border-block:1px solid var(--line)">
+    <div class="wrap contact">
+      <div class="sec-head contact-aside" style="margin:0">
+        <div class="eyebrow">Contact</div>
+        <h2>Questions about your booth?</h2>
+        <p>Ask about features, booth sizes, pricing or a design you're working on. We reply within one business day.</p>
+      </div>
+      <form class="contact-form" id="contact-form" novalidate>
+        <div class="field-row">
+          <div class="field"><label for="cf-name">Name</label><input id="cf-name" name="name" autocomplete="name" required maxlength="120"></div>
+          <div class="field"><label for="cf-email">Email</label><input id="cf-email" name="email" type="email" autocomplete="email" required maxlength="200"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="cf-company">Company</label><input id="cf-company" name="company" autocomplete="organization" maxlength="160"></div>
+          <div class="field"><label for="cf-topic">Topic</label>
+            <select id="cf-topic" name="topic"><option>General question</option><option>Pricing and access</option><option>Help with a design</option><option>Partnership</option><option>Other</option></select></div>
+        </div>
+        <div class="field"><label for="cf-msg">Message</label><textarea id="cf-msg" name="message" required maxlength="4000"></textarea></div>
+        <button class="btn btn-primary" type="submit">Send Message</button>
+        <p class="form-status" id="cf-status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+  <script>
+  (() => {
+    const form = document.getElementById('contact-form'), status = document.getElementById('cf-status'), btn = form.querySelector('button');
+    const say = (t, ok) => { status.textContent = t; status.classList.toggle('ok', !!ok); };
+    let ready = null;
+    async function getStore() {
+      if (!ready) ready = (async () => {
+        if (!window.claude || !claude.use) return null;
+        const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+        const id = db && user ? await user.id() : null;
+        return id ? { db, id } : null;
+      })().catch(() => null);
+      return ready;
+    }
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const f = Object.fromEntries(new FormData(form));
+      Object.keys(f).forEach(k => f[k] = String(f[k]).trim());
+      if (!f.name || !f.message || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) { say('Add your name, a valid email and a message.'); return; }
+      btn.disabled = true; say('Sending…');
+      const store = await getStore();
+      if (!store) {
+        try { const r = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) }); if (!r.ok) throw 0; form.reset(); say("Thanks — your message was sent. We'll reply by email.", true); }
+        catch { say("Your message couldn't be sent. Please try again in a moment."); }
+        btn.disabled = false; return;
+      }
+      try {
+        await store.db.collection('messages/' + store.id + '/items').add({ ...f, sentAt: new Date().toISOString() });
+        form.reset(); say("Thanks — your message was sent. We'll reply by email.", true);
+      } catch (err) {
+        say("Your message couldn't be sent from this view. Please check back soon.");
+      } finally { btn.disabled = false; }
+    });
+  })();
+  </script>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="cta">
+        <div>
+          <h2>See your finished booth before you build it.</h2>
+          <p>Start from an idea and end with an ultra-realistic image or video. Nothing to install.</p>
+        </div>
+        <div class="btns">
+          <a class="btn btn-white" href="/app/">Open AI Booth Design</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="foot-brand"><svg class="logo" viewBox="13 16 156 150" aria-hidden="true"><path class="lg-b" d="M128.6 61 81.6 45.8V23.5l73.5 27z"/><path class="lg-b" d="M71.9,141.9V23.5L25.8,58.3l-9.5,104,1.5-.5c15.2-9.9,33.5-16.8,53.6-19.6l.6-.2Z"/><path class="lg-b" d="M160,56.6l-34.9,12.9v73.8c15.6,3,30,8.5,42.5,15.9l-7.6-102.6Z"/></svg>
+
+
+
+
+<span>© AI Booth Design – Built by 8ThirtyOne Creative</span></span>
+    <span>Dimensions, weights and power figures are planning estimates. Confirm with your exhibit house and show services.</span>
+  </div>
+</footer>
+
+</body>
+</html>
