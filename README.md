@@ -9,6 +9,7 @@ Landing site and 3D trade show booth designer, staged at `staging.aiboothstudio.
 | `app/app.css`, `app/app.js` | The designer's styles and code |
 | `app/three-loader.js` | Loads three.js r170 and keeps r128-era colors and lighting, then starts the app |
 | `app/cloud.js` | Designs saved to accounts, autosave, share links and the view-only mode (`/app/?view=…`) |
+| `models/` | Real 3D models (CC0, Poly Haven) that replace built-in shapes; see models/README.md |
 | `api/share.js` | Serves a shared design to its view-only link |
 | `img/` | Images and the hero video |
 | `js/claude-shim.js` | Lets the pages run outside claude.ai: AI requests go to `/api/claude`, file saves become normal downloads |

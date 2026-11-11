@@ -8,6 +8,7 @@
 //     range-limited falloff (decay 0 inside the light's distance) instead of inverse-square.
 import * as T from "three";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 T.ColorManagement.enabled = false;
 
@@ -29,7 +30,7 @@ class SpotLight extends legacyIntensity(T.SpotLight) {
 }
 
 window.THREE = Object.assign({}, T, {
-  AmbientLight, HemisphereLight, DirectionalLight, PointLight, SpotLight, GLTFExporter,
+  AmbientLight, HemisphereLight, DirectionalLight, PointLight, SpotLight, GLTFExporter, GLTFLoader,
   sRGBEncoding: T.SRGBColorSpace, // old name, still used in a few places
 });
 

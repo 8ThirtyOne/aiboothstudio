@@ -2604,6 +2604,27 @@ function finishGroup(g, x, z, ry = 0) {
 }
 function part(g, geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); g.add(m); return m; }
 
+// Real 3D models (CC0, from Poly Haven, in /models) that replace a built-in shape once loaded.
+// The built-in shape shows meanwhile, and stays if the model can't be loaded.
+const MODEL_CACHE = new Map();
+function loadModel(url) {
+  if (!MODEL_CACHE.has(url)) MODEL_CACHE.set(url, new Promise((res, rej) => new THREE.GLTFLoader().load(url, gl => res(gl.scene), undefined, rej)));
+  return MODEL_CACHE.get(url);
+}
+function swapInModel(g, url, height) {
+  if (!THREE.GLTFLoader) return g;
+  loadModel(url).then(src => {
+    const m = src.clone(true);
+    m.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; } });
+    const box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3()), k = height / size.y;
+    m.scale.setScalar(k);
+    m.position.set(-(box.min.x + size.x / 2) * k, -box.min.y * k, -(box.min.z + size.z / 2) * k);
+    [...g.children].forEach(c => g.remove(c)); g.add(m);
+    markDirty();
+  }).catch(err => console.warn('model not loaded, keeping built-in shape', url, err));
+  return g;
+}
+
 // People
 const pGeo = {
   torso: lathe([[.001, 0], [.15, .02], [.16, .12], [.15, .24], [.18, .4], [.2, .5], [.17, .57], [.07, .62], [.001, .63]], 24),
@@ -2737,6 +2758,7 @@ function buildPlant(x, z) {
   const bark = new THREE.MeshStandardMaterial({ color: 0x5a4330, roughness: .9 });
   [[0, 0], [.04, .3], [-.05, -.4]].forEach(([dx, tilt]) => part(g, new THREE.CylinderGeometry(.012, .02, 1.05, 8), bark, dx, .95, 0, 0, 0, tilt * .25));
   g.add(leafCrown(520, .36, 1.15, 0, 1.55, 0, r));
+  swapInModel(g, '/models/potted_plant_02/potted_plant_02.gltf', 1.85);
   finishGroup(g, x, z);
 }
 function kioskTex() {
@@ -2948,15 +2970,15 @@ function cables(g, y, pts) { const m = mkMat('#777777', .4, .8); pts.forEach(([x
 const CATALOG = [
   // Furniture
   { id: 'sofa', cat: 'Furniture', name: '3-seat lounge sofa', tags: 'couch seating', build: () => captureBuilt(() => buildLounge(0, 0, 0)) },
-  { id: 'armchair', cat: 'Furniture', name: 'Lounge armchair', tags: 'seating', build: () => { const g = new THREE.Group(), c = fabricMat(muted(S.brand.primary)); P(g, rbox(.8, .22, .78, .05), c, 0, .23, 0); P(g, rbox(.62, .15, .6, .06), c, 0, .41, .06); P(g, rbox(.62, .42, .16, .06, false), c, 0, .68, -.3, -.14); [-.33, .33].forEach(x => P(g, rbox(.14, .48, .78, .05, false), c, x, .4, 0)); return g; } },
+  { id: 'armchair', cat: 'Furniture', name: 'Lounge armchair', tags: 'seating', build: () => { const g = new THREE.Group(), c = fabricMat(muted(S.brand.primary)), leg = M.dark(); [[-.33, -.3], [.33, -.3], [-.33, .3], [.33, .3]].forEach(([x, z]) => P(g, cyl(.016, .011, .16, 10), leg, x, .08, z)); P(g, rbox(.8, .16, .76, .04), c, 0, .24, 0); P(g, rbox(.6, .12, .6, .06), c, 0, .38, .05); P(g, rbox(.62, .44, .14, .06, false), c, 0, .6, -.31, -.12); [-.34, .34].forEach(x => P(g, rbox(.12, .36, .76, .05, false), c, x, .42, 0)); return g; } },
   { id: 'chair', cat: 'Furniture', name: 'Upholstered side chair', tags: 'seating', build: () => captureBuilt(() => buildChairPadded(0, 0, 0)) },
   { id: 'stool', cat: 'Furniture', name: 'Bar stool', tags: 'seating counter', build: () => { const g = new THREE.Group(), m = M.chrome(); P(g, lathe([[.001, 0], [.235, 0], [.245, .008], [.24, .02], [.2, .034], [.06, .046], [.03, .05], [.001, .05]], 64), mkMat('#26282c', .3, .7), 0, 0, 0); P(g, cyl(.025, .025, .72, 16), m, 0, .38, 0); P(g, rbox(.38, .07, .38, .17), fabricMat(muted(S.brand.primary, .2)), 0, .76, 0); P(g, new THREE.TorusGeometry(.17, .008, 8, 40), m, 0, .3, 0, Math.PI / 2); return g; } },
   { id: 'cafe-table', cat: 'Furniture', name: 'Café table, 36 in round', tags: 'table', build: () => captureBuilt(() => buildTableRound(0, 0)) },
   { id: 'cocktail', cat: 'Furniture', name: 'Cocktail table, 42 in high', tags: 'table highboy', build: () => { const g = new THREE.Group(), w = M.white(); P(g, cyl(.32, .32, .03, 48), w, 0, 1.06, 0); P(g, lathe([[.24, 0], [.23, .02], [.06, .08], [.035, .5], [.035, 1.0], [.08, 1.05]], 40), w, 0, 0, 0); return g; } },
-  { id: 'conf-table', cat: 'Furniture', name: 'Meeting table, 6 seats', tags: 'table conference', build: () => { const g = new THREE.Group(); P(g, rbox(2.1, .04, .95, .15), M.wood(), 0, .74, 0); [-.75, .75].forEach(x => P(g, rbox(.08, .72, .7, .02, false), M.dark(), x, .36, 0)); return g; } },
-  { id: 'coffee-table', cat: 'Furniture', name: 'Coffee table', tags: 'table low', build: () => { const g = new THREE.Group(); P(g, rbox(1.1, .05, .6, .1), M.wood(), 0, .42, 0); [[-.48, -.24], [.48, -.24], [-.48, .24], [.48, .24]].forEach(([x, z]) => P(g, cyl(.018, .014, .4, 10), M.dark(), x, .2, z)); return g; } },
+  { id: 'conf-table', cat: 'Furniture', name: 'Meeting table, 6 seats', tags: 'table conference', build: () => { const g = new THREE.Group(), d = M.dark(); P(g, rbox(2.1, .04, .95, .15), M.wood(), 0, .74, 0); [-.72, .72].forEach(x => { P(g, rbox(.07, .66, .07, .01, false), d, x, .37, 0); P(g, rbox(.1, .03, .72, .012, false), d, x, .015, 0); P(g, rbox(.08, .03, .78, .01, false), d, x, .705, 0); }); P(g, rbox(1.38, .05, .05, .01, false), d, 0, .6, 0); return g; } },
+  { id: 'coffee-table', cat: 'Furniture', name: 'Coffee table', tags: 'table low', build: () => { const g = new THREE.Group(); P(g, rbox(1.1, .05, .6, .1), M.wood(), 0, .42, 0); [[-.48, -.24], [.48, -.24], [-.48, .24], [.48, .24]].forEach(([x, z]) => P(g, cyl(.018, .014, .4, 10), M.dark(), x, .2, z)); return swapInModel(g, '/models/coffee_table_round_01/coffee_table_round_01.gltf', .42); } },
   { id: 'reception', cat: 'Furniture', name: 'Curved reception counter', tags: 'desk welcome', build: () => { const g = new THREE.Group(); P(g, objectGeometry({ shape: 'curvedWall', radiusFt: 1.4 / FT, arcDeg: 100, thicknessFt: .5 / FT }, 1, 1.0, 1), M.brand(), 0, .5, -1.0); P(g, objectGeometry({ shape: 'curvedWall', radiusFt: 1.47 / FT, arcDeg: 102, thicknessFt: .62 / FT }, 1, .04, 1), M.white(), 0, 1.02, -1.0); P(g, objectGeometry({ shape: 'curvedWall', radiusFt: 1.4 / FT, arcDeg: 98, thicknessFt: .46 / FT }, 1, .02, 1), M.glow('#fff2d8', 2.2), 0, .05, -1.0); return g; } },
-  { id: 'bench', cat: 'Furniture', name: 'Upholstered bench', tags: 'seating ottoman', build: () => { const g = new THREE.Group(); P(g, rbox(1.5, .42, .45, .06), fabricMat(muted(S.brand.secondary, .3)), 0, .21, 0); return g; } },
+  { id: 'bench', cat: 'Furniture', name: 'Upholstered bench', tags: 'seating ottoman', build: () => { const g = new THREE.Group(), f = fabricMat(muted(S.brand.secondary, .3)), d = M.dark(); [[-.68, -.17], [.68, -.17], [-.68, .17], [.68, .17]].forEach(([x, z]) => P(g, cyl(.016, .012, .3, 10), d, x, .15, z)); P(g, rbox(1.5, .05, .45, .02), d, 0, .315, 0); [-.37, .37].forEach(x => P(g, rbox(.73, .12, .43, .05), f, x, .4, 0)); return g; } },
   // Display
   { id: 'showcase', cat: 'Display', name: 'Glass showcase', tags: 'vitrine cabinet', build: () => { const g = new THREE.Group(); P(g, rbox(.9, .9, .5, .03, false), M.white(), 0, .45, 0); P(g, new THREE.BoxGeometry(.88, .7, .48), M.glass(), 0, 1.25, 0); P(g, new THREE.BoxGeometry(.9, .02, .5), M.white(), 0, 1.61, 0); P(g, new THREE.SphereGeometry(.12, 32, 24), mkMat(S.brand.secondary, .2, .6), 0, 1.02, 0); P(g, new THREE.BoxGeometry(.8, .01, .4), M.glow('#ffffff', 1.2), 0, 1.6, 0); return g; } },
   { id: 'plinth', cat: 'Display', name: 'Product plinth', tags: 'pedestal', build: () => { const g = new THREE.Group(); P(g, rbox(.6, .95, .6, .03, false), M.white(), 0, .475, 0); P(g, rbox(.32, .22, .22, .03), mkMat(S.brand.primary, .3, .4), 0, 1.06, 0, 0, .5); return g; } },
@@ -2986,7 +3008,7 @@ const CATALOG = [
   { id: 'coffee-bar', cat: 'Equipment', name: 'Coffee bar station', tags: 'espresso barista hospitality', build: () => { const g = new THREE.Group(); P(g, rbox(1.8, 1.0, .7, .06), M.brand(), 0, .5, 0); P(g, rbox(1.85, .04, .74, .08), M.white(), 0, 1.02, 0); P(g, rbox(.5, .42, .45, .04, false), M.chrome(), -.4, 1.25, -.05); [.2, .32, .44].forEach(x => P(g, cyl(.04, .035, .09, 20), M.white(), x, 1.085, .1)); return g; } },
   // Plants and accessories
   { id: 'tree', cat: 'Plants & accessories', name: 'Potted tree, 6 ft', tags: 'plant green', build: () => captureBuilt(() => buildPlant(0, 0)) },
-  { id: 'plant-small', cat: 'Plants & accessories', name: 'Table plant', tags: 'green small', build: () => { const g = new THREE.Group(); let s = 5; const r = () => (s = (s * 16807) % 2147483647) / 2147483647; P(g, lathe([[.001, 0], [.09, 0], [.11, .18], [.001, .18]], 32), M.white(), 0, 0, 0); g.add(leafCrown(160, .16, .9, 0, .32, 0, r)); return g; } },
+  { id: 'plant-small', cat: 'Plants & accessories', name: 'Table plant', tags: 'green small', build: () => { const g = new THREE.Group(); let s = 5; const r = () => (s = (s * 16807) % 2147483647) / 2147483647; P(g, lathe([[.001, 0], [.09, 0], [.11, .18], [.001, .18]], 32), M.white(), 0, 0, 0); g.add(leafCrown(160, .16, .9, 0, .32, 0, r)); return swapInModel(g, '/models/potted_plant_04/potted_plant_04.gltf', .38); } },
   { id: 'hedge', cat: 'Plants & accessories', name: 'Planter box with greenery', tags: 'plant divider', build: () => { const g = new THREE.Group(); let s = 9; const r = () => (s = (s * 16807) % 2147483647) / 2147483647; P(g, rbox(1.6, .5, .4, .02, false), M.wood(), 0, .25, 0); [-.55, 0, .55].forEach(x => g.add(leafCrown(220, .28, .7, x, .72, 0, r))); return g; } },
   { id: 'rug', cat: 'Plants & accessories', name: 'Area rug, 6×9 ft', tags: 'carpet', build: () => { const g = new THREE.Group(); P(g, rbox(2.74, .012, 1.83, .04), new THREE.MeshStandardMaterial({ color: hexColor(muted(S.brand.secondary, .5)), roughness: 1, normalMap: detailMaps('carpet') }), 0, .006, 0); return g; } },
   { id: 'bin', cat: 'Plants & accessories', name: 'Waste bin', tags: 'trash', build: () => { const g = new THREE.Group(); P(g, cyl(.17, .15, .6, 32), M.alu(), 0, .3, 0); return g; } },
@@ -3508,7 +3530,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v53'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v54'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);
