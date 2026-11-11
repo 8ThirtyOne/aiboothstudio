@@ -5,7 +5,7 @@
 // this is where the buyer's pass and credits get switched on.
 import crypto from "node:crypto";
 import { PLANS } from "./_plans.js";
-import { brandedEmail, esc, sendToOwner } from "./_email.js";
+import { brandedEmail, esc, sendToCustomer, sendToOwner } from "./_email.js";
 import { dbConfigured, recordPass } from "./_db.js";
 
 const TOLERANCE_SECONDS = 300;
@@ -50,17 +50,19 @@ export default async function handler(req, res) {
     const paid = s.amount_total != null ? `$${(s.amount_total / 100).toFixed(2)} ${String(s.currency || "").toUpperCase()}` : "unknown";
     const mode = event.livemode ? "LIVE" : "TEST";
     console.log("purchase", JSON.stringify({ mode, plan: s.metadata?.plan, email, paid, session: s.id, status: s.payment_status }));
-    let recorded = false;
+    let recorded = false, newRow = null;
     if (s.payment_status === "paid" && plan && email !== "unknown" && dbConfigured()) {
       try {
-        await recordPass({ email, plan: s.metadata.plan, days: plan.days, images: plan.images, videos: plan.videos, amountCents: s.amount_total ?? null, livemode: !!event.livemode, stripeSession: s.id });
+        newRow = await recordPass({ email, plan: s.metadata.plan, days: plan.days, images: plan.images, videos: plan.videos, amountCents: s.amount_total ?? null, livemode: !!event.livemode, stripeSession: s.id });
         recorded = true;
       } catch (err) {
         console.error("record pass failed", err?.message);
         return res.status(500).json({ error: "record_failed" }); // Stripe retries later
       }
     }
-    if (s.payment_status === "paid") {
+    // Only email the first time a pass is recorded, so a resent Stripe notice doesn't send duplicates.
+    const firstTime = !dbConfigured() || !!newRow;
+    if (s.payment_status === "paid" && firstTime) {
       const passName = plan ? plan.name : s.metadata?.plan || "Pass";
       const test = !event.livemode;
       const pi = typeof s.payment_intent === "string" ? s.payment_intent : s.payment_intent?.id;
@@ -82,6 +84,39 @@ export default async function handler(req, res) {
       });
       const text = [`${mode} purchase on AI Booth Design`, "", `Pass: ${passName}`, `Amount: ${paid}`, `Customer: ${email}`, `Stripe: ${dashboard}`, "", recorded ? "The pass is switched on." : "This pass still needs to be activated by hand."].join("\n");
       await sendToOwner({ subject: `${test ? "[Test] " : ""}New purchase: ${passName} (${paid})`, text, html, replyTo: email !== "unknown" ? email : undefined });
+
+      // Confirmation to the customer
+      if (plan && email !== "unknown") {
+        const site = `https://${req.headers["x-forwarded-host"] || req.headers.host}`;
+        const endsAt = newRow?.ends_at ? new Date(newRow.ends_at) : new Date(Date.now() + plan.days * 864e5);
+        const until = endsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+        const includes = `${plan.days} days of full access, ${plan.images} AI images, ${plan.videos} AI video${plan.videos === 1 ? "" : "s"}`;
+        const steps = recorded
+          ? `1. Open the app and click <b>Sign in</b>.<br>2. Enter <b>${esc(email)}</b> and open the sign-in link we email you.<br>3. Your pass and credits appear under <b>Account</b>.`
+          : "Your pass is being switched on and will be ready shortly. We'll be in touch if anything is needed.";
+        const custHtml = brandedEmail({
+          eyebrow: test ? "Payment confirmed · test" : "Payment confirmed",
+          title: `Your ${passName} is ready`,
+          rows: [
+            ["Pass", esc(passName)],
+            ["Amount paid", esc(paid)],
+            ["Includes", esc(includes)],
+            ["Active until", esc(until)],
+            ["Account email", esc(email)],
+          ],
+          panelHtml: steps,
+          button: { href: `${site}/app/#signin`, label: "Open AI Booth Design" },
+          footer: "Thanks for choosing AI Booth Design. Your card receipt comes separately from Stripe. Questions? Just reply to this email.",
+        });
+        const custText = [
+          `Your ${passName} is ready${test ? " (test purchase)" : ""}.`, "",
+          `Pass: ${passName}`, `Amount paid: ${paid}`, `Includes: ${includes}`, `Active until: ${until}`, `Account email: ${email}`, "",
+          recorded ? `Open ${site}/app/ and sign in with ${email} to start designing.` : "Your pass is being switched on and will be ready shortly.",
+          "", "Your card receipt comes separately from Stripe. Questions? Just reply to this email.",
+        ].join("\n");
+        await sendToCustomer({ to: email, subject: `${test ? "[Test] " : ""}Your AI Booth Design ${passName} is ready`, text: custText, html: custHtml });
+      }
+
     }
   }
 

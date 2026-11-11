@@ -9,7 +9,7 @@ const MONO = "Menlo,Consolas,monospace";
 
 // rows: [[label, valueHtml]], panelHtml: optional boxed block, button: { href, label }, footer: plain text
 export function brandedEmail({ eyebrow, title, rows = [], panelHtml = "", button = null, footer = "" }) {
-  const row = ([label, value]) => `<tr><td style="padding:6px 0;width:110px;vertical-align:top;font-family:${MONO};font-size:11px;line-height:1.6;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#6b7280">${esc(label)}</td><td style="padding:6px 0;font-family:${SANS};font-size:15px;line-height:1.5;color:#111827">${value}</td></tr>`;
+  const row = ([label, value]) => `<tr><td style="padding:6px 14px 6px 0;width:132px;vertical-align:top;font-family:${MONO};font-size:11px;line-height:1.6;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#6b7280">${esc(label)}</td><td style="padding:6px 0;font-family:${SANS};font-size:15px;line-height:1.5;color:#111827">${value}</td></tr>`;
   return `<!doctype html><html><body style="margin:0;padding:0;background:#f3f4f6">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
@@ -32,6 +32,28 @@ export function brandedEmail({ eyebrow, title, rows = [], panelHtml = "", button
 }
 
 export const LOGO_ATTACHMENT = { filename: "ai-booth-design-logo.png", content: LOGO_PNG_BASE64, content_id: "aibd-logo" };
+
+// Sends a branded email to a customer from CONTACT_FROM. Replies go to SUPPORT_EMAIL (or the first CONTACT_TO).
+export async function sendToCustomer({ to, subject, text, html }) {
+  const { RESEND_API_KEY, CONTACT_TO, CONTACT_FROM, SUPPORT_EMAIL } = process.env;
+  if (!RESEND_API_KEY || !CONTACT_FROM || !to) return false;
+  const replyTo = (SUPPORT_EMAIL || String(CONTACT_TO || "").split(",")[0] || "").trim();
+  const r = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: CONTACT_FROM,
+      to: [to],
+      ...(replyTo ? { reply_to: replyTo } : {}),
+      subject: String(subject).replace(/[\r\n]+/g, " ").slice(0, 150),
+      text,
+      html,
+      attachments: [LOGO_ATTACHMENT],
+    }),
+  });
+  if (!r.ok) console.error("resend customer email error", r.status, (await r.text()).slice(0, 300));
+  return r.ok;
+}
 
 // Sends to CONTACT_TO from CONTACT_FROM. Returns true when Resend accepted it; false when not configured or rejected.
 export async function sendToOwner({ subject, text, html, replyTo }) {

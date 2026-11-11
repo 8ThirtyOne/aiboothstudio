@@ -24,6 +24,7 @@ async function rest(path, { method = "GET", body, prefer } = {}) {
 }
 
 // Records a purchased pass. Safe to call twice for the same Stripe session (Stripe can resend notices).
+// Returns the new row, or null when this session was already recorded.
 export async function recordPass({ email, plan, days, images, videos, amountCents, livemode, stripeSession }) {
   const now = Date.now();
   const row = {
@@ -37,7 +38,8 @@ export async function recordPass({ email, plan, days, images, videos, amountCent
     livemode,
     stripe_session: stripeSession,
   };
-  return rest("passes?on_conflict=stripe_session", { method: "POST", body: row, prefer: "resolution=ignore-duplicates,return=minimal" });
+  const rows = await rest("passes?on_conflict=stripe_session", { method: "POST", body: row, prefer: "resolution=ignore-duplicates,return=representation" });
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
 }
 
 // The customer's newest pass that hasn't expired, or null.
