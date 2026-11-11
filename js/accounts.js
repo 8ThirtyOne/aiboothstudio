@@ -37,6 +37,8 @@
 
   window.aibdAuth = {
     state,
+    client, // the signed-in Supabase client, used by the app for the customer's own designs
+    userId() { return state.user ? state.user.id : null; },
     onChange(fn) { listeners.add(fn); if (!state.loading) fn(state); return () => listeners.delete(fn); },
     async sendLink(email) {
       const { error } = await client.auth.signInWithOtp({

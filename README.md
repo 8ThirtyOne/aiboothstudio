@@ -8,6 +8,8 @@ Landing site and 3D trade show booth designer, staged at `staging.aiboothstudio.
 | `app/index.html` | The 3D booth designer page (markup) |
 | `app/app.css`, `app/app.js` | The designer's styles and code |
 | `app/three-loader.js` | Loads three.js r170 and keeps r128-era colors and lighting, then starts the app |
+| `app/cloud.js` | Designs saved to accounts, autosave, share links and the view-only mode (`/app/?view=…`) |
+| `api/share.js` | Serves a shared design to its view-only link |
 | `img/` | Images and the hero video |
 | `js/claude-shim.js` | Lets the pages run outside claude.ai: AI requests go to `/api/claude`, file saves become normal downloads |
 | `api/claude.js` | Server function that calls the Claude API for AI Build, photo to 3D and prompt writing |
@@ -19,6 +21,7 @@ Landing site and 3D trade show booth designer, staged at `staging.aiboothstudio.
 | `api/_db.js` | Server access to the passes table (SUPABASE_URL, SUPABASE_SECRET_KEY) |
 | `supabase/schema.sql` | Database setup, run once in the Supabase SQL Editor |
 | `supabase/002_ai_limits.sql` | Adds AI action limits per pass; run after schema.sql |
+| `supabase/003_designs.sql` | Designs table for saved designs and share links |
 | `terms/`, `privacy/`, `refunds/` | Legal pages (drafts: fill in the highlighted details and have them reviewed) |
 
 ## Hosting (Vercel)

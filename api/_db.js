@@ -62,6 +62,12 @@ export async function userFromToken(token) {
   return u?.email ? { id: u.id, email: u.email.toLowerCase() } : null;
 }
 
+// A design that its owner has shared, found by its share token, or null.
+export async function sharedDesign(token) {
+  const rows = await rest(`designs?select=name,data,updated_at&share_token=eq.${encodeURIComponent(token)}&limit=1`);
+  return rows && rows[0] ? rows[0] : null;
+}
+
 // Uses one AI design action on a pass. Returns true if one was available and used.
 export async function useAiAction(passId) {
   const ok = await rest("rpc/use_ai_action", { method: "POST", body: { p_pass: passId } });

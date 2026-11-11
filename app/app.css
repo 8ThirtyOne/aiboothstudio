@@ -505,3 +505,22 @@ details.sec > .ss > .ss-label { display: none; }
   .canvas-info { display: none; }
   .render-badge { display: none; }
 }
+
+/* Account designs, autosave status, share links, view-only bar (cloud.js) */
+.cloud-status { align-self: center; font: 500 11px var(--font-mono); letter-spacing: .08em; padding: 5px 10px; border-radius: 999px; background: var(--surface); color: var(--fg-muted); box-shadow: var(--shadow); }
+.cloud-status[data-kind="ok"]::before { content: "✓ "; color: var(--good); }
+.cloud-status[data-kind="err"] { color: #c2410c; }
+.cl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.cl-card { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--panel); min-width: 0; }
+.cl-card.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.cl-thumb { aspect-ratio: 16 / 10; border-radius: var(--r); background: var(--panel2); overflow: hidden; }
+.cl-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cl-info { display: grid; gap: 2px; min-width: 0; }
+.cl-info strong { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cl-info span { font-size: 11px; color: var(--fg-muted); }
+.cl-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.cl-share { grid-column: 1 / -1; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--accent-lo); font-size: 12px; color: var(--fg-muted); }
+.cl-share-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.cl-share-row input { flex: 1; min-width: 180px; font: 12px var(--font-mono); padding: 6px 8px; background: var(--surface); color: var(--fg); border: 1px solid var(--border); border-radius: var(--r); }
+.view-bar { position: fixed; z-index: 50; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 24px); padding: 8px 10px 8px 16px; border-radius: 999px; background: var(--surface); color: var(--fg); box-shadow: var(--shadow); font-size: 13px; border: 1px solid var(--border); }
+.view-bar.err { padding: 10px 16px; color: #c2410c; }
