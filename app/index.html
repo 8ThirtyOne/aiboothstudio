@@ -488,6 +488,12 @@ details.sec > .ss > .ss-label { display: none; }
 .acct-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
 .acct-row span { color: var(--fg-muted); }
 .acct-row b { font-weight: 600; text-align: right; }
+.acct-sent { display: grid; justify-items: center; text-align: center; gap: 10px; padding: 18px 12px 20px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--accent-lo); }
+.acct-sent-icon { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; }
+.acct-sent-title { font: 400 22px/1.15 var(--font-head); color: var(--fg); }
+.acct-sent p { font-size: 14px; line-height: 1.5; color: var(--fg-muted); max-width: 40ch; }
+.acct-sent p b { color: var(--fg); font-weight: 600; word-break: break-all; }
+.acct-sent .acct-sent-small { font-size: 12px; }
 .cv-pill:hover { filter: brightness(1.06); }
 .cv-top-right { position: absolute; top: 14px; right: 14px; z-index: 7; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100% - 330px); }
 .cv-top-right .btn { border-radius: 999px; box-shadow: var(--shadow); border-color: var(--border); padding: 7px 13px; }
@@ -4194,9 +4200,36 @@ function openAccountLive() {
       const v = input.value.trim();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { msg.textContent = 'Enter a valid email address.'; return; }
       btn.disabled = true; msg.textContent = 'Sending…';
-      try { await window.aibdAuth.sendLink(v); msg.textContent = `Check ${v} for a sign-in link, then open it to finish signing in. It can take a minute to arrive.`; }
+      try { await window.aibdAuth.sendLink(v); showSent(v); return; }
       catch (e) { msg.textContent = /rate|seconds|too many/i.test(e?.message || '') ? 'Too many sign-in emails. Wait a minute and try again.' : "Couldn't send the sign-in link. Try again."; }
       btn.disabled = false;
+    };
+    // After sending: replace the form with a clear "check your email" message, and hold back resending for a minute.
+    const showSent = email => {
+      w.innerHTML = `<div class="acct-sent">
+          <div class="acct-sent-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></div>
+          <div class="acct-sent-title">Check your email</div>
+          <p>We sent a sign-in link to <b id="acct-sent-to"></b>. Open it on this or any device to finish signing in.</p>
+          <p class="acct-sent-small">It can take a minute to arrive. If it isn't in your inbox, check spam or promotions.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" id="acct-resend" disabled>Send again</button><button class="btn" id="acct-change">Use a different email</button></div>
+        <div class="acct-msg" id="acct-msg" aria-live="polite"></div>`;
+      document.getElementById('acct-sent-to').textContent = email;
+      const resend = document.getElementById('acct-resend'), m2 = document.getElementById('acct-msg');
+      let left = 60;
+      const tick = () => {
+        if (!resend.isConnected) return clearInterval(timer);
+        left--; resend.textContent = left > 0 ? `Send again in ${left}s` : 'Send again'; resend.disabled = left > 0;
+        if (left <= 0) clearInterval(timer);
+      };
+      resend.textContent = `Send again in ${left}s`;
+      const timer = setInterval(tick, 1000);
+      resend.onclick = async () => {
+        resend.disabled = true; m2.textContent = 'Sending…';
+        try { await window.aibdAuth.sendLink(email); showSent(email); }
+        catch (e) { m2.textContent = /rate|seconds|too many/i.test(e?.message || '') ? 'Too many sign-in emails. Wait a minute and try again.' : "Couldn't send the sign-in link. Try again."; resend.disabled = false; }
+      };
+      document.getElementById('acct-change').onclick = () => openAccountLive();
     };
     btn.onclick = send; input.onkeydown = e => { if (e.key === 'Enter') send(); };
     setTimeout(() => input.focus(), 50);
