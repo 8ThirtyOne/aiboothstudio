@@ -82,7 +82,7 @@ export default async function handler(req, res) {
         button: { href: dashboard, label: "View in Stripe" },
         footer: `Stripe session ${s.id}`,
       });
-      const text = [`${mode} purchase on AI Booth Design`, "", `Pass: ${passName}`, `Amount: ${paid}`, `Customer: ${email}`, `Stripe: ${dashboard}`, "", recorded ? "The pass is switched on." : "This pass still needs to be activated by hand."].join("\n");
+      const text = [`${mode} purchase on AI Booth Studio`, "", `Pass: ${passName}`, `Amount: ${paid}`, `Customer: ${email}`, `Stripe: ${dashboard}`, "", recorded ? "The pass is switched on." : "This pass still needs to be activated by hand."].join("\n");
       await sendToOwner({ subject: `${test ? "[Test] " : ""}New purchase: ${passName} (${paid})`, text, html, replyTo: email !== "unknown" ? email : undefined });
 
       // Confirmation to the customer
@@ -105,8 +105,8 @@ export default async function handler(req, res) {
             ["Account email", esc(email)],
           ],
           panelHtml: steps,
-          button: { href: `${site}/app/#signin`, label: "Open AI Booth Design" },
-          footer: "Thanks for choosing AI Booth Design. Your card receipt comes separately from Stripe. Questions? Just reply to this email.",
+          button: { href: `${site}/app/#signin`, label: "Open AI Booth Studio" },
+          footer: "Thanks for choosing AI Booth Studio. Your card receipt comes separately from Stripe. Questions? Just reply to this email.",
         });
         const custText = [
           `Your ${passName} is ready${test ? " (test purchase)" : ""}.`, "",
@@ -114,7 +114,7 @@ export default async function handler(req, res) {
           recorded ? `Open ${site}/app/ and sign in with ${email} to start designing.` : "Your pass is being switched on and will be ready shortly.",
           "", "Your card receipt comes separately from Stripe. Questions? Just reply to this email.",
         ].join("\n");
-        await sendToCustomer({ to: email, subject: `${test ? "[Test] " : ""}Your AI Booth Design ${passName} is ready`, text: custText, html: custHtml });
+        await sendToCustomer({ to: email, subject: `${test ? "[Test] " : ""}Your AI Booth Studio ${passName} is ready`, text: custText, html: custHtml });
       }
 
     }

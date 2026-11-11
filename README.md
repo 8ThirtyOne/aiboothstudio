@@ -1,4 +1,4 @@
-# AI Booth Design
+# AI Booth Studio
 
 Landing site and 3D trade show booth designer, staged at `staging.aiboothstudio.com`.
 

@@ -16,7 +16,7 @@ export function brandedEmail({ eyebrow, title, rows = [], panelHtml = "", button
   <tr><td style="background:#000000;padding:18px 24px">
     <table role="presentation" cellpadding="0" cellspacing="0"><tr>
       <td style="vertical-align:middle"><img src="cid:aibd-logo" width="31" height="30" alt="" style="display:block;border:0;outline:none"></td>
-      <td style="vertical-align:middle;padding-left:11px;font-family:${SANS};font-size:18px;line-height:1;font-weight:800;color:#ffffff"><strong style="font-weight:800">AI Booth Design</strong></td>
+      <td style="vertical-align:middle;padding-left:11px;font-family:${SANS};font-size:18px;line-height:1;font-weight:800;color:#ffffff"><strong style="font-weight:800">AI Booth Studio</strong></td>
     </tr></table>
   </td></tr>
   <tr><td style="padding:26px 24px 6px">
@@ -31,7 +31,7 @@ export function brandedEmail({ eyebrow, title, rows = [], panelHtml = "", button
 </td></tr></table></body></html>`;
 }
 
-export const LOGO_ATTACHMENT = { filename: "ai-booth-design-logo.png", content: LOGO_PNG_BASE64, content_id: "aibd-logo" };
+export const LOGO_ATTACHMENT = { filename: "ai-booth-studio-logo.png", content: LOGO_PNG_BASE64, content_id: "aibd-logo" };
 
 // Sends a branded email to a customer from CONTACT_FROM. Replies go to SUPPORT_EMAIL (or the first CONTACT_TO).
 export async function sendToCustomer({ to, subject, text, html }) {

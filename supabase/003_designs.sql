@@ -1,4 +1,4 @@
--- AI Booth Design: designs saved to customer accounts, with optional share links.
+-- AI Booth Studio: designs saved to customer accounts, with optional share links.
 -- Run once in Supabase: SQL Editor -> New query -> paste all of this -> Run. (Safe to run again.)
 
 create table if not exists public.designs (

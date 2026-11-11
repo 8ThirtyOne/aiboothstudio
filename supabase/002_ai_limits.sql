@@ -1,4 +1,4 @@
--- AI Booth Design: AI action limits per pass.
+-- AI Booth Studio: AI action limits per pass.
 -- Run once in Supabase: SQL Editor -> New query -> paste all of this -> Run.
 -- (Run after schema.sql. Safe to run again.)
 

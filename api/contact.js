@@ -2,7 +2,7 @@
 // Sends through Resend (resend.com) when these environment variables are set in Vercel:
 //   RESEND_API_KEY   the Resend API key
 //   CONTACT_TO       where messages go
-//   CONTACT_FROM     a sender on the verified domain, e.g. "AI Booth Design <contact@aiboothstudio.com>"
+//   CONTACT_FROM     a sender on the verified domain, e.g. "AI Booth Studio <contact@aiboothstudio.com>"
 // Without them, messages are only logged to the function logs.
 import { LOGO_PNG_BASE64 } from "./_logo.js";
 
@@ -25,7 +25,7 @@ function emailHtml(msg) {
   <tr><td style="background:#000000;padding:18px 24px">
     <table role="presentation" cellpadding="0" cellspacing="0"><tr>
       <td style="vertical-align:middle"><img src="cid:aibd-logo" width="31" height="30" alt="" style="display:block;border:0;outline:none"></td>
-      <td style="vertical-align:middle;padding-left:11px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:18px;line-height:1;font-weight:800;color:#ffffff"><strong style="font-weight:800">AI Booth Design</strong></td>
+      <td style="vertical-align:middle;padding-left:11px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:18px;line-height:1;font-weight:800;color:#ffffff"><strong style="font-weight:800">AI Booth Studio</strong></td>
     </tr></table>
   </td></tr>
   <tr><td style="padding:26px 24px 6px">
@@ -37,7 +37,7 @@ function emailHtml(msg) {
     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 18px;font:15px/1.6 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#111827">${body}</div>
   </td></tr>
   <tr><td style="padding:18px 24px 26px">
-    <a href="mailto:${esc(msg.email)}?subject=${encodeURIComponent("Re: " + (msg.topic || "Your message to AI Booth Design"))}" style="display:inline-block;background:#2563eb;color:#ffffff;font:700 14px/1 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;text-decoration:none;padding:12px 20px;border-radius:999px">Reply to ${first}</a>
+    <a href="mailto:${esc(msg.email)}?subject=${encodeURIComponent("Re: " + (msg.topic || "Your message to AI Booth Studio"))}" style="display:inline-block;background:#2563eb;color:#ffffff;font:700 14px/1 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;text-decoration:none;padding:12px 20px;border-radius:999px">Reply to ${first}</a>
   </td></tr>
   <tr><td style="padding:14px 24px;border-top:1px solid #e5e7eb;font:12px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#9ca3af">Sent from the contact form at aiboothstudio.com.</td></tr>
 </table>
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
   const details = [`Name: ${msg.name}`, `Email: ${msg.email}`];
   if (msg.company) details.push(`Company: ${msg.company}`);
   details.push(`Topic: ${msg.topic || "General question"}`);
-  const text = `${details.join("\n")}\n\n${msg.message}\n\n— Sent from the AI Booth Design contact form`;
+  const text = `${details.join("\n")}\n\n${msg.message}\n\n— Sent from the AI Booth Studio contact form`;
 
   try {
     const r = await fetch("https://api.resend.com/emails", {
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
         subject: `New message: ${msg.topic || "General question"} from ${msg.name}`.replace(/[\r\n]+/g, " ").slice(0, 150),
         text,
         html: emailHtml(msg),
-        attachments: [{ filename: "ai-booth-design-logo.png", content: LOGO_PNG_BASE64, content_id: "aibd-logo" }],
+        attachments: [{ filename: "ai-booth-studio-logo.png", content: LOGO_PNG_BASE64, content_id: "aibd-logo" }],
       }),
     });
     if (!r.ok) {

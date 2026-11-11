@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     "line_items[0][quantity]": "1",
     "line_items[0][price_data][currency]": "usd",
     "line_items[0][price_data][unit_amount]": String(plan.amount),
-    "line_items[0][price_data][product_data][name]": `AI Booth Design ${plan.name}`,
+    "line_items[0][price_data][product_data][name]": `AI Booth Studio ${plan.name}`,
     "line_items[0][price_data][product_data][description]": `${plan.days} days of full access, ${plan.images} AI images and ${plan.videos} AI video${plan.videos === 1 ? "" : "s"}. One-time payment, no subscription.`,
     customer_creation: "always",
     billing_address_collection: "auto",

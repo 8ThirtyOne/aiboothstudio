@@ -1,4 +1,4 @@
--- AI Booth Design: accounts database.
+-- AI Booth Studio: accounts database.
 -- Run once in Supabase: SQL Editor -> New query -> paste all of this -> Run.
 
 -- One row per purchased pass. Rows are written only by the server (Stripe webhook),

@@ -1,4 +1,4 @@
--- AI Booth Design: AI Render (photo-realistic images and videos), their credits, and where results are stored.
+-- AI Booth Studio: AI Render (photo-realistic images and videos), their credits, and where results are stored.
 -- Run once in Supabase: SQL Editor -> New query -> paste all of this -> Run. (Safe to run again.)
 
 -- One row per image or video a customer asks for.
