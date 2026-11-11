@@ -24,8 +24,8 @@ function emailHtml(msg) {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
   <tr><td style="background:#000000;padding:18px 24px">
     <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-      <td style="vertical-align:middle"><img src="cid:aibd-logo" width="30" height="29" alt="" style="display:block;border:0"></td>
-      <td style="vertical-align:middle;padding-left:10px;font:800 17px/1 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#ffffff">AI Booth Design</td>
+      <td style="vertical-align:middle"><img src="cid:aibd-logo" width="31" height="30" alt="" style="display:block;border:0;outline:none"></td>
+      <td style="vertical-align:middle;padding-left:11px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:18px;line-height:1;font-weight:800;color:#ffffff"><strong style="font-weight:800">AI Booth Design</strong></td>
     </tr></table>
   </td></tr>
   <tr><td style="padding:26px 24px 6px">
