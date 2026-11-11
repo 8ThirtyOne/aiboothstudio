@@ -28,7 +28,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDraw
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 
@@ -1109,7 +1109,7 @@ function surfaceMat(o) {
     const x = c.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 256);
     g.addColorStop(0, color); g.addColorStop(1, safeHex(o.gradientTo, color));
     x.fillStyle = g; x.fillRect(0, 0, 4, 256);
-    opt.map = new THREE.CanvasTexture(c); opt.map.encoding = THREE.sRGBEncoding; opt.color = new THREE.Color(1, 1, 1);
+    opt.map = new THREE.CanvasTexture(c); opt.map.colorSpace = THREE.SRGBColorSpace; opt.color = new THREE.Color(1, 1, 1);
   }
   const glow = o.material === 'led' ? Math.max(num(o.emissive, .8), .4) : Math.max(0, Math.min(1, num(o.emissive)));
   if (glow) { opt.emissive = hexColor(color); opt.emissiveIntensity = glow * 2.2; if (opt.map) opt.emissiveMap = opt.map; }
@@ -1128,7 +1128,7 @@ function textMesh(o, w, h) {
   x.font = `${weight} ${size}px ${face}`;
   x.fillStyle = safeHex(o.color, '#ffffff'); x.textAlign = 'center'; x.textBaseline = 'middle';
   x.fillText(str, W / 2, H / 2);
-  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = renderer.capabilities.getMaxAnisotropy();
   const glow = num(o.emissive);
   const m = new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: .5, alphaTest: .05,
@@ -1345,7 +1345,7 @@ function buildReconFloor() {
   else if (fl.pattern === 'stripes') { x.fillStyle = col2; x.fillRect(0, 0, 256, 512); }
   else if (fl.pattern === 'tiles') { x.strokeStyle = col2; x.lineWidth = 4; x.strokeRect(0, 0, 512, 512); }
   else if (fl.pattern === 'planks') { x.strokeStyle = col2; x.lineWidth = 3; [0, 128, 256, 384].forEach((y, i) => { x.beginPath(); x.moveTo(0, y); x.lineTo(512, y); x.moveTo(i % 2 ? 128 : 384, y); x.lineTo(i % 2 ? 128 : 384, y + 128); x.stroke(); }); }
-  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.anisotropy = renderer.capabilities.getMaxAnisotropy(); t.repeat.set(W / mod, D / mod);
   const presets = { carpet: [.98, 'carpet'], vinyl: [.4, 'wood'], wood: [.35, 'wood'], tile: [.22, 'stone'], marble: [.1, 'stone'], concrete: [.55, 'stone'], rubber: [.8, null], epoxy: [.12, null] };
   const [roughness, detail] = presets[fl.material] || presets.carpet;
@@ -1584,7 +1584,7 @@ function poseArt(a) {
   markDirty();
 }
 function addArtMesh(a) {
-  const t = new THREE.Texture(a.img); t.encoding = THREE.sRGBEncoding; t.needsUpdate = true;
+  const t = new THREE.Texture(a.img); t.colorSpace = THREE.SRGBColorSpace; t.needsUpdate = true;
   t.anisotropy = renderer.capabilities.getMaxAnisotropy();
   const m = new THREE.MeshStandardMaterial({ map: t, transparent: true, alphaTest: .02, roughness: .6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   a.mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), m);
@@ -1910,7 +1910,7 @@ function onBgFile(e) {
     bgPhoto = { img, url, name: f.name, shift: 50, blur: 2, bright: 100 };
     setEnv('none', document.getElementById('env-none'));
     if (bgEnv) bgEnv.dispose();
-    const eq = new THREE.Texture(img); eq.encoding = THREE.sRGBEncoding; eq.mapping = THREE.EquirectangularReflectionMapping; eq.needsUpdate = true;
+    const eq = new THREE.Texture(img); eq.colorSpace = THREE.SRGBColorSpace; eq.mapping = THREE.EquirectangularReflectionMapping; eq.needsUpdate = true;
     bgEnv = pmrem.fromEquirectangular(eq).texture; eq.dispose();
     applyBg();
     document.getElementById('bg-controls').hidden = false;
@@ -1944,7 +1944,7 @@ function applyBg() {
   const k = Math.max(W / img.naturalWidth, H / img.naturalHeight) * 1.06, dw = img.naturalWidth * k, dh = img.naturalHeight * k;
   x.filter = `blur(${bgPhoto.blur * W / 1200}px) brightness(${bgPhoto.bright}%)`;
   x.drawImage(img, (W - dw) / 2, (H - dh) * bgPhoto.shift / 100, dw, dh);
-  bgTex = new THREE.CanvasTexture(c); bgTex.encoding = THREE.sRGBEncoding;
+  bgTex = new THREE.CanvasTexture(c); bgTex.colorSpace = THREE.SRGBColorSpace;
   scene.background = bgTex; scene.fog = null;
   scene.environment = bgEnv; ground.material = shadowCatcher; ground.visible = true;
   markDirty();
@@ -2175,7 +2175,7 @@ function buildGlb() {
   return new Promise((resolve, reject) => {
     const helper = selBox.visible; selBox.visible = false;
     try {
-      new THREE.GLTFExporter().parse(boothG, glb => { selBox.visible = helper; resolve(new Uint8Array(glb)); }, { binary: true, onlyVisible: true, maxTextureSize: 2048 });
+      new THREE.GLTFExporter().parse(boothG, glb => { selBox.visible = helper; resolve(new Uint8Array(glb)); }, err => { selBox.visible = helper; reject(err); }, { binary: true, onlyVisible: true, maxTextureSize: 2048 });
     } catch (e) { selBox.visible = helper; reject(e); }
   });
 }
@@ -2745,7 +2745,7 @@ function kioskTex() {
   x.fillStyle = S.brand.secondary; x.fillRect(28, 300, 264, 54); x.fillStyle = S.brand.accent; x.textAlign = "center"; x.textBaseline = "middle";
   const name = S.brand.company || ""; let fs = 40; x.font = `700 ${fs}px Arial`; fs = Math.min(40, 40 * 270 / Math.max(1, x.measureText(name).width)); x.font = `700 ${fs}px Arial`;
   x.fillText(name, 160, 170); x.font = "600 20px Arial"; x.fillStyle = S.brand.bg; x.fillText("TAP TO EXPLORE", 160, 327);
-  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 function buildKiosk(x, z) {
   const g = new THREE.Group(), body = new THREE.MeshStandardMaterial({ color: 0xf2f1ee, roughness: .35 });
@@ -2793,7 +2793,7 @@ function exhibitGraphic(hueA, hueB, k) {
   x.globalAlpha = .1; x.fillStyle = "#ffffff";
   x.beginPath(); x.moveTo(260 + k * 20, 0); x.lineTo(512, 0); x.lineTo(512, 256); x.lineTo(180 + k * 20, 256); x.fill();
   x.globalAlpha = .8; x.fillRect(48, 40, 160, 14); x.fillRect(48, 62, 100, 8);
-  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 function addHallDetail(addE) {
   let seed = 7; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -2873,7 +2873,7 @@ function aisleSignTex(label) {
   const c = document.createElement('canvas'); c.width = 512; c.height = 160; const x = c.getContext('2d');
   x.fillStyle = '#16324f'; x.fillRect(0, 0, 512, 160); x.fillStyle = '#ffffff'; x.fillRect(0, 138, 512, 6);
   x.font = '700 92px Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(label, 256, 72);
-  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 function addHallDetailPlus(addE) {
   addHallDetail(addE);
@@ -2931,7 +2931,7 @@ const M = {
   brand: (k = 'primary', rough = .5) => mkMat(S.brand[k], rough, 0),
   glow: (hex = '#ffffff', i = 1.6) => mkMat(hex, .3, 0, hex, i),
 };
-function screenMat(w = 480, h = 270) { const t = screenTex(w, h); t.encoding = THREE.sRGBEncoding; return new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: .85, roughness: .12 }); }
+function screenMat(w = 480, h = 270) { const t = screenTex(w, h); t.colorSpace = THREE.SRGBColorSpace; return new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: .85, roughness: .12 }); }
 function brandPanelTex(w = 256, h = 512) {
   const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
   const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, S.brand.primary); g.addColorStop(1, S.brand.bg); x.fillStyle = g; x.fillRect(0, 0, w, h);
@@ -2939,7 +2939,7 @@ function brandPanelTex(w = 256, h = 512) {
   x.fillStyle = S.brand.accent; x.textAlign = 'center'; x.textBaseline = 'middle';
   const name = S.brand.company || ''; let fs = w * .14; x.font = `700 ${fs}px Arial`; fs = Math.min(fs, fs * w * .86 / Math.max(1, x.measureText(name).width)); x.font = `700 ${fs}px Arial`;
   x.fillText(name, w / 2, h * .32);
-  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 const P = (g, geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => part(g, geo, mat, x, y, z, rx, ry, rz);
 const cyl = (rt, rb, h, s = 32) => new THREE.CylinderGeometry(rt, rb, h, s);
@@ -2968,7 +2968,7 @@ const CATALOG = [
   // Electronics
   { id: 'tv-stand', cat: 'Electronics', name: 'TV 65 in on floor stand', tags: 'screen monitor display', build: () => { const g = new THREE.Group(); P(g, rbox(.8, .03, .55, .05), M.dark(), 0, .015, 0); P(g, rbox(.1, 1.2, .06, .02, false), M.dark(), 0, .6, -.05); P(g, rbox(1.46, .84, .04, .01, false), M.dark(), 0, 1.45, 0); P(g, new THREE.PlaneGeometry(1.42, .8), screenMat(), 0, 1.45, .021); return g; } },
   { id: 'tv-wall', cat: 'Electronics', name: 'TV 75 in, wall mount', tags: 'screen monitor', build: () => { const g = new THREE.Group(); P(g, rbox(1.68, .96, .04, .01, false), M.dark(), 0, 1.6, 0); P(g, new THREE.PlaneGeometry(1.64, .92), screenMat(), 0, 1.6, .021); return g; } },
-  { id: 'videowall', cat: 'Electronics', name: 'Video wall 3×3', tags: 'led screens', build: () => { const g = new THREE.Group(); P(g, new THREE.BoxGeometry(2.1, 2.4, .1), M.dark(), 0, 1.2, -.06); const t = screenTex(960, 540); t.encoding = THREE.sRGBEncoding; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const tt = t.clone(); tt.needsUpdate = true; tt.repeat.set(1 / 3, 1 / 3); tt.offset.set(i / 3, j / 3); P(g, new THREE.PlaneGeometry(.66, .38), new THREE.MeshStandardMaterial({ map: tt, emissive: 0xffffff, emissiveMap: tt, emissiveIntensity: .85 }), -0.67 + i * .67, 1.4 + (j - 1) * .385, 0); } return g; } },
+  { id: 'videowall', cat: 'Electronics', name: 'Video wall 3×3', tags: 'led screens', build: () => { const g = new THREE.Group(); P(g, new THREE.BoxGeometry(2.1, 2.4, .1), M.dark(), 0, 1.2, -.06); const t = screenTex(960, 540); t.colorSpace = THREE.SRGBColorSpace; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const tt = t.clone(); tt.needsUpdate = true; tt.repeat.set(1 / 3, 1 / 3); tt.offset.set(i / 3, j / 3); P(g, new THREE.PlaneGeometry(.66, .38), new THREE.MeshStandardMaterial({ map: tt, emissive: 0xffffff, emissiveMap: tt, emissiveIntensity: .85 }), -0.67 + i * .67, 1.4 + (j - 1) * .385, 0); } return g; } },
   { id: 'kiosk', cat: 'Electronics', name: 'Touch kiosk', tags: 'screen interactive', build: () => captureBuilt(() => buildKiosk(0, 0)) },
   { id: 'totem', cat: 'Electronics', name: 'LED totem screen', tags: 'digital signage', build: () => { const g = new THREE.Group(); P(g, rbox(.66, 2.0, .14, .04, false), M.dark(), 0, 1.0, 0); const t = brandPanelTex(256, 768); P(g, new THREE.PlaneGeometry(.6, 1.9), new THREE.MeshStandardMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: .9 }), 0, 1.0, .071); return g; } },
   { id: 'laptop-desk', cat: 'Electronics', name: 'Demo desk with laptop', tags: 'computer table', build: () => { const g = new THREE.Group(); P(g, rbox(1.2, .04, .6, .03), M.white(), 0, .75, 0); [-.55, .55].forEach(x => P(g, new THREE.BoxGeometry(.04, .73, .55), M.white(), x, .365, 0)); P(g, rbox(.34, .015, .23, .01), M.alu(), 0, .78, .05); const s = P(g, rbox(.34, .23, .008, .01, false), M.alu(), 0, .895, -.065, -.25); P(g, new THREE.PlaneGeometry(.31, .2), screenMat(310, 200), 0, .896, -.059, -.25); return g; } },
@@ -3041,7 +3041,7 @@ function itemThumb(def) {
   if (thumbCache[def.id]) return thumbCache[def.id];
   if (!thumbRenderer) {
     thumbRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-    thumbRenderer.setSize(176, 132, false); thumbRenderer.outputEncoding = THREE.sRGBEncoding; thumbRenderer.toneMapping = THREE.ACESFilmicToneMapping; thumbRenderer.toneMappingExposure = .9;
+    thumbRenderer.setSize(176, 132, false); thumbRenderer.outputColorSpace = THREE.SRGBColorSpace; thumbRenderer.toneMapping = THREE.ACESFilmicToneMapping; thumbRenderer.toneMappingExposure = .9;
   }
   const sc = new THREE.Scene(); sc.environment = defaultEnvMap;
   sc.add(new THREE.HemisphereLight(0xffffff, 0x777777, .9)); const dl = new THREE.DirectionalLight(0xffffff, 1.2); dl.position.set(3, 5, 4); sc.add(dl);
@@ -3508,7 +3508,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v50'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v51'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);
@@ -3604,7 +3604,7 @@ function brochureTex(i) {
   x.fillStyle = ['#ffffff', S.brand.primary, '#f4f1ea', S.brand.bg, '#ffffff', S.brand.secondary][i % 6]; x.fillRect(0, 0, 128, 180);
   x.fillStyle = [S.brand.primary, S.brand.secondary, S.brand.primary, S.brand.secondary, S.brand.bg, S.brand.bg][i % 6];
   x.fillRect(0, 108, 128, 72); x.globalAlpha = .7; x.fillRect(14, 22, 70, 9); x.fillRect(14, 38, 46, 6);
-  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 [
   { id: 'podium', cat: 'Display', name: 'Presentation podium, 36 in', tags: 'lectern speaker stand', build: () => {
