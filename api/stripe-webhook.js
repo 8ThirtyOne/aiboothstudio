@@ -5,6 +5,7 @@
 // this is where the buyer's pass and credits get switched on.
 import crypto from "node:crypto";
 import { PLANS } from "./_plans.js";
+import { brandedEmail, esc, sendToOwner } from "./_email.js";
 
 const TOLERANCE_SECONDS = 300;
 
@@ -29,16 +30,6 @@ function verify(raw, header, secret) {
   return sigs.some(s => { const b = Buffer.from(s, "hex"); return b.length === exp.length && crypto.timingSafeEqual(b, exp); });
 }
 
-async function notifyOwner(lines, subject) {
-  const { RESEND_API_KEY, CONTACT_TO, CONTACT_FROM } = process.env;
-  if (!RESEND_API_KEY || !CONTACT_TO || !CONTACT_FROM) return;
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: CONTACT_FROM, to: CONTACT_TO.split(",").map(s => s.trim()).filter(Boolean), subject, text: lines.join("\n") }),
-  });
-  if (!r.ok) console.error("purchase email failed", r.status);
-}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
@@ -59,16 +50,27 @@ export default async function handler(req, res) {
     const mode = event.livemode ? "LIVE" : "TEST";
     console.log("purchase", JSON.stringify({ mode, plan: s.metadata?.plan, email, paid, session: s.id, status: s.payment_status }));
     if (s.payment_status === "paid") {
-      await notifyOwner([
-        `${mode} purchase on AI Booth Design`,
-        "",
-        `Pass: ${plan ? plan.name : s.metadata?.plan || "unknown"}`,
-        `Amount: ${paid}`,
-        `Customer: ${email}`,
-        `Stripe session: ${s.id}`,
-        "",
-        "Accounts aren't connected yet, so this pass still has to be switched on by hand.",
-      ], `${mode === "TEST" ? "[Test] " : ""}New purchase: ${plan ? plan.name : "pass"} (${paid})`);
+      const passName = plan ? plan.name : s.metadata?.plan || "Pass";
+      const test = !event.livemode;
+      const pi = typeof s.payment_intent === "string" ? s.payment_intent : s.payment_intent?.id;
+      const dashboard = `https://dashboard.stripe.com/${test ? "test/" : ""}${pi ? `payments/${pi}` : "payments"}`;
+      const rows = [
+        ["Pass", esc(passName)],
+        ["Amount", esc(paid)],
+        ["Customer", `<a href="mailto:${esc(email)}" style="color:#2563eb;text-decoration:none">${esc(email)}</a>`],
+      ];
+      if (plan) rows.push(["Includes", esc(`${plan.days} days, ${plan.images} AI images, ${plan.videos} AI video${plan.videos === 1 ? "" : "s"}`)]);
+      rows.push(["Mode", test ? "Test payment" : "Live payment"]);
+      const html = brandedEmail({
+        eyebrow: test ? "Payment received · test" : "Payment received",
+        title: `${passName} purchased for ${paid}`,
+        rows,
+        panelHtml: "Accounts aren't connected yet, so this pass still has to be switched on by hand. Once accounts are live, this happens automatically.",
+        button: { href: dashboard, label: "View in Stripe" },
+        footer: `Stripe session ${s.id}`,
+      });
+      const text = [`${mode} purchase on AI Booth Design`, "", `Pass: ${passName}`, `Amount: ${paid}`, `Customer: ${email}`, `Stripe: ${dashboard}`, "", "Accounts aren't connected yet, so this pass still has to be switched on by hand."].join("\n");
+      await sendToOwner({ subject: `${test ? "[Test] " : ""}New purchase: ${passName} (${paid})`, text, html, replyTo: email !== "unknown" ? email : undefined });
     }
   }
 
