@@ -39,7 +39,7 @@ function emailHtml(msg) {
   <tr><td style="padding:18px 24px 26px">
     <a href="mailto:${esc(msg.email)}?subject=${encodeURIComponent("Re: " + (msg.topic || "Your message to AI Booth Design"))}" style="display:inline-block;background:#2563eb;color:#ffffff;font:700 14px/1 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;text-decoration:none;padding:12px 20px;border-radius:999px">Reply to ${first}</a>
   </td></tr>
-  <tr><td style="padding:14px 24px;border-top:1px solid #e5e7eb;font:12px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#9ca3af">Sent from the contact form at aiboothstudio.com. Replying to this email goes to ${esc(msg.email)}.</td></tr>
+  <tr><td style="padding:14px 24px;border-top:1px solid #e5e7eb;font:12px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#9ca3af">Sent from the contact form at aiboothstudio.com.</td></tr>
 </table>
 </td></tr></table></body></html>`;
 }
