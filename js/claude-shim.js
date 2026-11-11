@@ -37,7 +37,10 @@
       throw { code: 'network', message: 'Could not reach the AI service.' };
     }
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw { code: data.code || 'server_error', message: data.message || 'The AI service returned an error.' };
+    if (!res.ok) {
+      const fallback = res.status === 504 ? 'The AI took too long to answer. Try again.' : `The AI service returned an error (${res.status}).`;
+      throw { code: data.code || 'server_error', message: data.message || fallback };
+    }
     if (opts.onText) opts.onText({ text: data.text, delta: data.text });
     return { text: data.text, truncated: !!data.truncated };
   }

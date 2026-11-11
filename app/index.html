@@ -4286,7 +4286,7 @@ REFERENCE IMAGES: ${aiRefs.length} image(s) are attached. Use them as the main v
     closeModal();
     applyDesign(design);
   } catch (e) {
-    msg.textContent = { cancelled: 'Stopped.', not_granted: 'Claude access was declined for this page.', rate_limited: 'Usage limit reached. Try again later.', invalid_json: 'The design came back incomplete. Try again.' }[e?.code] || 'Could not build that. Try again.';
+    msg.textContent = { cancelled: 'Stopped.', not_granted: 'Claude access was declined for this page.', rate_limited: 'Usage limit reached. Try again later.', invalid_json: 'The design came back incomplete. Try again.' }[e?.code] || e?.message || 'Could not build that. Try again.';
   } finally {
     const run = document.getElementById('ai-run'); if (run) run.disabled = false;
     const st = document.getElementById('ai-stop'); if (st) st.hidden = true;
