@@ -6,6 +6,7 @@
 import crypto from "node:crypto";
 import { PLANS } from "./_plans.js";
 import { brandedEmail, esc, sendToOwner } from "./_email.js";
+import { dbConfigured, recordPass } from "./_db.js";
 
 const TOLERANCE_SECONDS = 300;
 
@@ -49,6 +50,16 @@ export default async function handler(req, res) {
     const paid = s.amount_total != null ? `$${(s.amount_total / 100).toFixed(2)} ${String(s.currency || "").toUpperCase()}` : "unknown";
     const mode = event.livemode ? "LIVE" : "TEST";
     console.log("purchase", JSON.stringify({ mode, plan: s.metadata?.plan, email, paid, session: s.id, status: s.payment_status }));
+    let recorded = false;
+    if (s.payment_status === "paid" && plan && email !== "unknown" && dbConfigured()) {
+      try {
+        await recordPass({ email, plan: s.metadata.plan, days: plan.days, images: plan.images, videos: plan.videos, amountCents: s.amount_total ?? null, livemode: !!event.livemode, stripeSession: s.id });
+        recorded = true;
+      } catch (err) {
+        console.error("record pass failed", err?.message);
+        return res.status(500).json({ error: "record_failed" }); // Stripe retries later
+      }
+    }
     if (s.payment_status === "paid") {
       const passName = plan ? plan.name : s.metadata?.plan || "Pass";
       const test = !event.livemode;
@@ -65,11 +76,11 @@ export default async function handler(req, res) {
         eyebrow: test ? "Payment received · test" : "Payment received",
         title: `${passName} purchased for ${paid}`,
         rows,
-        panelHtml: "Accounts aren't connected yet, so this pass still has to be switched on by hand. Once accounts are live, this happens automatically.",
+        panelHtml: recorded ? "The pass is switched on. The customer can sign in to the app with this email to use it." : "This pass couldn't be switched on automatically, so it still needs to be activated by hand.",
         button: { href: dashboard, label: "View in Stripe" },
         footer: `Stripe session ${s.id}`,
       });
-      const text = [`${mode} purchase on AI Booth Design`, "", `Pass: ${passName}`, `Amount: ${paid}`, `Customer: ${email}`, `Stripe: ${dashboard}`, "", "Accounts aren't connected yet, so this pass still has to be switched on by hand."].join("\n");
+      const text = [`${mode} purchase on AI Booth Design`, "", `Pass: ${passName}`, `Amount: ${paid}`, `Customer: ${email}`, `Stripe: ${dashboard}`, "", recorded ? "The pass is switched on." : "This pass still needs to be activated by hand."].join("\n");
       await sendToOwner({ subject: `${test ? "[Test] " : ""}New purchase: ${passName} (${paid})`, text, html, replyTo: email !== "unknown" ? email : undefined });
     }
   }

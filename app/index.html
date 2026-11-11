@@ -6,6 +6,9 @@
 <title>AI Booth Design</title>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="/js/claude-shim.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"></script>
+<script src="/js/config.js"></script>
+<script src="/js/accounts.js"></script>
 </head>
 <body>
 
@@ -4133,7 +4136,7 @@ function openGenerate() {
   <div class="ss-title">Your Generations</div><div class="gen-grid" id="gen-grid"></div>`;
   body.append(wrap);
   const vp = document.getElementById('vp-dir'); document.getElementById('gen-dir').value = vp ? vp.value : '';
-  if (acct.signedIn) { genState.pass = acct.pass; const sel = document.getElementById('gen-pass'); sel.value = acct.pass; sel.disabled = true; }
+  if (acct.signedIn && (!acct.live || acct.row)) { genState.pass = acct.pass; const sel = document.getElementById('gen-pass'); sel.value = acct.pass; sel.disabled = true; }
   document.getElementById('gen-pass').onchange = e => { genState.pass = e.target.value; genState.used = { img: 0, vid: 0 }; drawGen(); };
   document.getElementById('gen-img').onclick = () => queueGen('img');
   document.getElementById('gen-vid').onclick = () => queueGen('vid');
@@ -4165,16 +4168,60 @@ async function queueGen(kind) {
   drawGen();
 }
 
-// Accounts (preview): sign in with an emailed link, see your pass and credits. No data leaves this page yet.
-const acct = { signedIn: false, name: '', pass: 'month' };
+// Accounts: real sign-in through window.aibdAuth (Supabase) on the hosted site; a preview everywhere else.
+const acct = { signedIn: false, name: '', email: '', pass: 'month', row: null, live: !!window.aibdAuth };
 const PASS_DAYS = { week: 7, month: 30, year: 365 };
+const fmtDate = d => new Date(d).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+if (window.aibdAuth) window.aibdAuth.onChange(st => {
+  acct.signedIn = !!st.user; acct.email = st.user?.email || ''; acct.name = acct.email; acct.row = st.pass;
+  if (st.pass) { acct.pass = st.pass.plan; genState.pass = st.pass.plan; genState.used = { img: st.pass.images_used, vid: st.pass.videos_used }; }
+  drawAcctBtn();
+  const t = document.getElementById('modal-title')?.textContent || '';
+  if (!document.getElementById('modal').hidden && /^(Sign In|Your Account)$/i.test(t)) openAccount();
+});
+function openAccount() { return acct.live ? openAccountLive() : openAccountPreview(); }
+function openAccountLive() {
+  const body = openModal(acct.signedIn ? 'Your Account' : 'Sign In', false);
+  const w = document.createElement('div'); w.className = 'acct-wrap'; body.append(w);
+  if (!acct.signedIn) {
+    w.innerHTML = `<p style="font-size:13px;color:var(--fg-muted);line-height:1.5">Use the email you bought your pass with. We'll email you a one-time sign-in link, so there's no password to remember.</p>
+      <div class="acct-field"><label for="acct-email">Email</label><input id="acct-email" type="email" autocomplete="email" placeholder="you@company.com"></div>
+      <button class="btn btn-primary" id="acct-send">Email me a sign-in link</button>
+      <div class="acct-msg" id="acct-msg" aria-live="polite"></div>
+      <p style="font-size:12px;color:var(--fg-muted)">No pass yet? <a href="/#pricing" style="color:var(--accent)">See passes and pricing</a></p>`;
+    const msg = document.getElementById('acct-msg'), btn = document.getElementById('acct-send'), input = document.getElementById('acct-email');
+    const send = async () => {
+      const v = input.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { msg.textContent = 'Enter a valid email address.'; return; }
+      btn.disabled = true; msg.textContent = 'Sending…';
+      try { await window.aibdAuth.sendLink(v); msg.textContent = `Check ${v} for a sign-in link, then open it to finish signing in. It can take a minute to arrive.`; }
+      catch (e) { msg.textContent = /rate|seconds|too many/i.test(e?.message || '') ? 'Too many sign-in emails. Wait a minute and try again.' : "Couldn't send the sign-in link. Try again."; }
+      btn.disabled = false;
+    };
+    btn.onclick = send; input.onkeydown = e => { if (e.key === 'Enter') send(); };
+    setTimeout(() => input.focus(), 50);
+    return;
+  }
+  const r = acct.row, p = r ? GEN_PASSES[r.plan] : null;
+  w.innerHTML = `<div class="acct-card">
+      <div class="acct-row"><span>Signed in as</span><b id="acct-who"></b></div>
+      <div class="acct-row"><span>Pass</span><b>${p ? p.name + (r.livemode ? '' : ' (test)') : 'No active pass'}</b></div>
+      ${r ? `<div class="acct-row"><span>Active until</span><b>${fmtDate(r.ends_at)}</b></div>` : ''}
+    </div>
+    ${r ? `<div class="gen-credits"><div class="gen-chip"><b>${r.images_total - r.images_used} / ${r.images_total}</b><span>Images left</span></div><div class="gen-chip"><b>${r.videos_total - r.videos_used} / ${r.videos_total}</b><span>Videos left</span></div></div>` : '<p style="font-size:13px;color:var(--fg-muted);line-height:1.5">Buy a pass with this email to unlock AI features and image and video credits. It shows up here a few seconds after checkout.</p>'}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${r ? '<button class="btn" id="acct-refresh">Refresh</button>' : '<a class="btn btn-primary" href="/#pricing" style="text-align:center">See passes</a>'}<button class="btn" id="acct-out">Sign out</button></div>
+    <div class="acct-msg" id="acct-msg" aria-live="polite"></div>`;
+  document.getElementById('acct-who').textContent = acct.email;
+  const rf = document.getElementById('acct-refresh'); if (rf) rf.onclick = async () => { rf.disabled = true; await window.aibdAuth.refresh(); };
+  document.getElementById('acct-out').onclick = async () => { await window.aibdAuth.signOut(); closeModal(); };
+}
 function drawAcctBtn() {
   const b = document.getElementById('acct-btn'); if (!b) return;
   b.textContent = '';
   if (acct.signedIn) { const d = document.createElement('span'); d.className = 'acct-dot'; d.textContent = (acct.name[0] || 'A').toUpperCase(); b.append(d, document.createTextNode('Account')); }
   else b.textContent = 'Sign in';
 }
-function openAccount() {
+function openAccountPreview() {
   const body = openModal(acct.signedIn ? 'Your Account' : 'Sign In', false);
   const w = document.createElement('div'); w.className = 'acct-wrap'; body.append(w);
   const note = `<div class="gen-note"><b>Preview.</b> Accounts turn on when passes go on sale. Nothing you type here is sent or saved.</div>`;
@@ -4371,7 +4418,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v48'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v49'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);

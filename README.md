@@ -13,6 +13,9 @@ Landing site and 3D trade show booth designer, staged at `staging.aiboothstudio.
 | `api/checkout.js` | Starts a Stripe Checkout payment for a pass (prices in `api/_plans.js`) |
 | `api/stripe-webhook.js` | Receives Stripe payment notices, checks the signature, emails the owner |
 | `thanks/index.html` | Page shown after a successful payment |
+| `js/config.js`, `js/accounts.js` | Supabase sign-in (email links) and the signed-in customer's active pass |
+| `api/_db.js` | Server access to the passes table (SUPABASE_URL, SUPABASE_SECRET_KEY) |
+| `supabase/schema.sql` | Database setup, run once in the Supabase SQL Editor |
 
 ## Hosting (Vercel)
 
@@ -25,8 +28,8 @@ Every push to `main` deploys; every other branch gets its own preview link.
 
 ## Not live yet (placeholders)
 
-- Sign-in and accounts, and AI Render image and video generation.
-- Stripe checkout works, but a purchase does not switch on a pass yet (accounts come first).
+- AI Render image and video generation.
+- Set AI_REQUIRE_PASS=1 in Vercel to limit AI features to signed-in customers with an active pass.
 - The site is marked `noindex` so search engines skip it while it's a test site.
 
 ## Notes

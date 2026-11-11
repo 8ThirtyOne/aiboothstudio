@@ -27,9 +27,12 @@
     const images = [];
     for (const b of opts.images || []) images.push(await toJpegBase64(b));
     let res;
+    const headers = { 'Content-Type': 'application/json' };
+    const token = window.aibdAuth ? await window.aibdAuth.token().catch(() => null) : null;
+    if (token) headers.Authorization = `Bearer ${token}`;
     try {
       res = await fetch('/api/claude', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: opts.signal,
+        method: 'POST', headers, signal: opts.signal,
         body: JSON.stringify({ input, images, tier: opts.modelTier || 'default' }),
       });
     } catch (e) {

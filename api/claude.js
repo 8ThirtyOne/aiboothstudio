@@ -1,6 +1,7 @@
 // POST /api/claude — the app's AI features (AI Build, photo to 3D, prompt writing) call Claude through here.
 // Needs ANTHROPIC_API_KEY set in the hosting provider's environment settings. The key never reaches the browser.
 import Anthropic from "@anthropic-ai/sdk";
+import { activePass, dbConfigured, userFromToken } from "./_db.js";
 
 // Reads ANTHROPIC_API_KEY from the environment. Stays inside the host's function time limit.
 const client = new Anthropic({ timeout: 55_000, maxRetries: 1 });
@@ -11,6 +12,16 @@ const MAX_PROMPT_CHARS = 60_000;
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ code: "method_not_allowed", message: "Use POST." });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ code: "not_configured", message: "AI features aren't set up on this server yet." });
+
+  // With AI_REQUIRE_PASS=1, only signed-in customers with an active pass can use the AI features.
+  if (process.env.AI_REQUIRE_PASS === "1") {
+    if (!dbConfigured()) return res.status(503).json({ code: "not_configured", message: "Accounts aren't set up on this server yet." });
+    const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+    const user = await userFromToken(token).catch(() => null);
+    if (!user) return res.status(401).json({ code: "sign_in_required", message: "Sign in to use AI features." });
+    const pass = await activePass(user.email).catch(() => null);
+    if (!pass) return res.status(402).json({ code: "pass_required", message: "AI features need an active pass. See passes and pricing on the website." });
+  }
 
   const { input, images = [], tier = "default" } = req.body || {};
   const messages = Array.isArray(input) ? input : [{ role: "user", content: String(input || "") }];
