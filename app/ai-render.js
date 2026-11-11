@@ -4,7 +4,13 @@
   const auth = window.aibdAuth;
   if (!auth) return; // not on the hosted site: keep the preview
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-  const live = { items: [], polling: new Map(), loaded: false };
+  const live = { items: [], polling: new Map(), loaded: false, mode: 'upgrade' };
+  const brandInfo = () => {
+    let size = '', type = '';
+    try { size = getSZ().lbl; type = (BOOTH_TYPES[S.boothType] || '').toString(); } catch {}
+    return { company: S.brand.company || '', tagline: S.brand.tagline || '', colors: [S.brand.primary, S.brand.secondary, S.brand.accent].filter(Boolean), size, type };
+  };
+  const latestImage = () => live.items.find(r => r.kind === 'image' && r.status === 'done' && r.result_url);
   const POLL_MS = { image: 4000, video: 10000 };
 
   async function api(path, init = {}) {
@@ -65,30 +71,39 @@
       w.innerHTML = `<p class="gen-note">AI Render is included with every pass: photo-realistic images and short videos of your booth. Your account doesn't have an active pass yet.</p><a class="btn btn-primary" href="/#pricing" style="text-align:center">See passes and pricing</a>`;
       return;
     }
-    w.innerHTML = `<div class="gen-top"><p style="margin:0;font-size:13px;color:var(--fg-muted);max-width:52ch;line-height:1.5">Frame the view you want in 3D, then generate. AI keeps your booth's layout, colors and graphics and makes it look real.</p>
+    w.innerHTML = `<div class="gen-top"><p style="margin:0;font-size:13px;color:var(--fg-muted);max-width:52ch;line-height:1.5">Frame the view you want in 3D, choose a style, then generate.</p>
         <div class="gen-credits"><div class="gen-chip"><b id="gen-img-left">${c.img} / ${c.imgTotal}</b><span>Images left</span></div><div class="gen-chip"><b id="gen-vid-left">${c.vid} / ${c.vidTotal}</b><span>Videos left</span></div></div></div>
+      <div class="gen-mode" role="radiogroup" aria-label="Render style">
+        <div class="gen-mode-btn" data-mode="upgrade" role="radio" tabindex="0"><b>Concept Upgrade</b><span>AI designs a premium, built-out version of your booth, then photographs it</span></div>
+        <div class="gen-mode-btn" data-mode="faithful" role="radio" tabindex="0"><b>Faithful to My Design</b><span>Keeps your design exactly and makes it look real</span></div>
+      </div>
       <textarea class="gen-dir" id="gen-dir" rows="3" aria-label="Art direction" placeholder="Art direction (optional), e.g. busy show hours, warm evening light"></textarea>
       <div class="gen-btns"><button class="btn btn-primary" id="gen-img">Generate image · 1 credit</button><button class="btn" id="gen-vid">Generate video · 1 credit</button></div>
-      <div class="gen-status" id="gen-status" aria-live="polite">Images take about 20 seconds. Videos take 1–3 minutes, and you can keep working meanwhile.</div>
+      <div class="gen-status" id="gen-status" aria-live="polite">Images take about 30 seconds. Videos animate your latest AI image and take 1–3 minutes; you can keep working meanwhile.</div>
       <div class="ss-title">Your Generations</div><div class="gen-grid" id="gen-grid"></div>`;
     const vp = document.getElementById('vp-dir'); document.getElementById('gen-dir').value = vp ? vp.value.slice(0, 600) : '';
+    const modeBtns = [...w.querySelectorAll('.gen-mode-btn')];
+    const setMode = m => { live.mode = m; modeBtns.forEach(b => { const on = b.dataset.mode === m; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); }); };
+    modeBtns.forEach(b => { b.onclick = () => setMode(b.dataset.mode); b.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMode(b.dataset.mode); } }; }); setMode(live.mode);
     document.getElementById('gen-img').onclick = () => start('image');
     document.getElementById('gen-vid').onclick = () => start('video');
     draw(); if (!live.loaded) loadList();
   }
 
-  async function start(kind) {
+  async function start(kind, sourceUrl) {
     const st = document.getElementById('gen-status'), btn = document.getElementById(kind === 'image' ? 'gen-img' : 'gen-vid');
     const c = credits(); if (!c || (kind === 'image' ? c.img : c.vid) <= 0) { st.textContent = `No ${kind} credits left on your pass.`; return; }
-    btn.disabled = true; st.textContent = 'Capturing the current view…';
+    btn.disabled = true;
     try {
-      const image = await captureView();
+      const src = kind === 'video' ? (sourceUrl || latestImage()?.result_url || null) : null;
+      st.textContent = src ? 'Animating your latest AI image…' : 'Capturing the current view…';
+      const image = src ? undefined : await captureView();
       st.textContent = 'Sending to AI Render…';
       const direction = (document.getElementById('gen-dir')?.value || '').trim();
-      const { id } = await api('/api/render', { method: 'POST', body: JSON.stringify({ kind, image, direction }) });
+      const { id } = await api('/api/render', { method: 'POST', body: JSON.stringify({ kind, mode: live.mode, image, sourceUrl: src || undefined, direction, brand: brandInfo() }) });
       upsert({ id, kind, status: 'queued', created_at: new Date().toISOString() });
       poll(id, kind); auth.refresh();
-      st.textContent = kind === 'image' ? 'Creating your image. It appears below in about 20 seconds.' : 'Creating your video. It appears below in 1–3 minutes; you can close this window and keep working.';
+      st.textContent = kind === 'image' ? 'Creating your image. It appears below in about 30 seconds.' : 'Creating your video. It appears below in 1–3 minutes; you can close this window and keep working.';
     } catch (e) { st.textContent = e?.message || "AI Render couldn't start. Try again."; }
     btn.disabled = false; draw();
   }
@@ -106,8 +121,9 @@
         if (it.kind === 'video') { const v = el('video'); v.src = it.result_url; v.controls = true; v.loop = true; v.muted = true; v.playsInline = true; v.preload = 'metadata'; d.append(v); }
         else { const im = el('img'); im.src = it.result_url; im.alt = 'Photo-realistic render of the booth'; im.loading = 'lazy'; d.append(im); }
         const open = el('a', 'gen-open', it.kind === 'video' ? 'Open video' : 'Open full size'); open.href = it.result_url; open.target = '_blank'; open.rel = 'noopener'; d.append(open);
+        if (it.kind === 'image') { const an = el('button', 'gen-animate', 'Animate · 1 video'); an.onclick = () => start('video', it.result_url); d.append(an); }
       } else {
-        const msg = it.status === 'failed' ? `Couldn't create this ${it.kind}. Your credit was returned.` : it.kind === 'video' ? 'Creating video… 1–3 minutes' : 'Creating image… about 20 seconds';
+        const msg = it.status === 'failed' ? `Couldn't create this ${it.kind}. Your credit was returned.` : it.kind === 'video' ? 'Creating video… 1–3 minutes' : 'Creating image… about 30 seconds';
         const t = el('div', 'gen-wait' + (it.status === 'failed' ? ' failed' : ''), msg); d.append(t);
       }
       grid.append(d);

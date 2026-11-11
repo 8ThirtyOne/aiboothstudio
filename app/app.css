@@ -534,3 +534,10 @@ details.sec > .ss > .ss-label { display: none; }
 .gen-wait.failed { color: #c2410c; background: var(--panel); }
 @media (prefers-reduced-motion: no-preference) { .gen-wait:not(.failed) { background-size: 200% 200%; animation: gen-stripes 1.2s linear infinite; } }
 @keyframes gen-stripes { to { background-position: 28px 0; } }
+.gen-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gen-mode-btn { display: grid; gap: 3px; text-align: left; padding: 10px 12px; border-radius: var(--r-lg); border: 1.5px solid var(--border); background: var(--panel); color: var(--fg); cursor: pointer; font: 12px/1.4 var(--font-ui); }
+.gen-mode-btn b { font-size: 13px; font-weight: 700; }
+.gen-mode-btn span { color: var(--fg-muted); }
+.gen-mode-btn.on { border-color: var(--accent); background: var(--accent-lo); box-shadow: 0 0 0 1px var(--accent); }
+.gen-animate { position: absolute; left: 8px; bottom: 8px; font: 600 11px var(--font-ui); color: #fff; background: var(--accent); border: 0; border-radius: 999px; padding: 5px 10px; cursor: pointer; }
+@media (max-width: 560px) { .gen-mode { grid-template-columns: 1fr; } }
