@@ -560,12 +560,21 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     </div>
   </section>
   <script>
-    // Paste each plan's checkout link (Stripe Payment Link, Lemon Squeezy, etc.) here
-    const CHECKOUT = { week: '', month: '', year: '' };
+    // Buy buttons open Stripe Checkout through /api/checkout
     document.querySelectorAll('[data-plan]').forEach(a => {
-      const url = CHECKOUT[a.dataset.plan];
-      if (url) { a.href = url; a.target = '_blank'; a.rel = 'noopener'; return; }
-      a.addEventListener('click', e => { e.preventDefault(); a.nextElementSibling.textContent = 'Checkout opens soon.'; });
+      a.addEventListener('click', async e => {
+        e.preventDefault();
+        const note = a.nextElementSibling, label = a.textContent;
+        if (a.dataset.busy) return;
+        a.dataset.busy = '1'; a.textContent = 'Opening checkout…'; note.textContent = '';
+        try {
+          const r = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: a.dataset.plan }) });
+          const d = await r.json().catch(() => ({}));
+          if (r.ok && d.url) { location.href = d.url; return; }
+          note.textContent = d.message || 'Checkout opens soon.';
+        } catch { note.textContent = "Couldn't open checkout. Please try again."; }
+        a.textContent = label; delete a.dataset.busy;
+      });
     });
   </script>
 
