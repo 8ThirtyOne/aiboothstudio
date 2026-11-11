@@ -1,0 +1,121 @@
+// AI Render, live version: photo-realistic images and videos from the current view, using the customer's pass credits.
+// Loaded after app.js on the hosted site. Replaces the preview AI Render window.
+(function () {
+  const auth = window.aibdAuth;
+  if (!auth) return; // not on the hosted site: keep the preview
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const live = { items: [], polling: new Map(), loaded: false };
+  const POLL_MS = { image: 4000, video: 10000 };
+
+  async function api(path, init = {}) {
+    const token = await auth.token();
+    const r = await fetch(path, { ...init, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init.headers || {}) } });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw { status: r.status, message: data.message || `AI Render returned an error (${r.status}).` };
+    return data;
+  }
+
+  // Current view as a JPEG (longest side 1600 px), base64 without the data: prefix.
+  async function captureView() {
+    const blob = await currentViewBlob(), url = URL.createObjectURL(blob);
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.88).split(',')[1];
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  function poll(id, kind) {
+    if (live.polling.has(id)) return;
+    const tick = async () => {
+      try {
+        const { render } = await api(`/api/render?id=${encodeURIComponent(id)}`);
+        upsert(render);
+        if (render.status === 'done' || render.status === 'failed') { live.polling.delete(id); auth.refresh(); draw(); return; }
+      } catch { /* try again next tick */ }
+      live.polling.set(id, setTimeout(tick, POLL_MS[kind] || 6000));
+      draw();
+    };
+    live.polling.set(id, setTimeout(tick, 1500));
+  }
+  function upsert(r) { const i = live.items.findIndex(x => x.id === r.id); if (i >= 0) live.items[i] = { ...live.items[i], ...r }; else live.items.unshift(r); }
+
+  async function loadList() {
+    try { const { renders } = await api('/api/render'); live.items = renders; live.loaded = true; renders.filter(r => r.status === 'queued' || r.status === 'running').forEach(r => poll(r.id, r.kind)); }
+    catch { live.loaded = true; }
+    draw();
+  }
+
+  function credits() {
+    const r = acct.row;
+    return r ? { img: r.images_total - r.images_used, imgTotal: r.images_total, vid: r.videos_total - r.videos_used, vidTotal: r.videos_total } : null;
+  }
+
+  function openRender() {
+    const body = openModal('AI Render', true);
+    const w = el('div'); w.style.cssText = 'display:grid;gap:12px'; body.append(w);
+    if (!acct.signedIn) {
+      w.innerHTML = `<p class="gen-note">Sign in with the email you bought your pass with to turn your design into photo-realistic images and videos.</p>`;
+      const b = el('button', 'btn btn-primary', 'Sign in'); b.onclick = () => openAccount(); w.append(b); return;
+    }
+    const c = credits();
+    if (!c) {
+      w.innerHTML = `<p class="gen-note">AI Render is included with every pass: photo-realistic images and short videos of your booth. Your account doesn't have an active pass yet.</p><a class="btn btn-primary" href="/#pricing" style="text-align:center">See passes and pricing</a>`;
+      return;
+    }
+    w.innerHTML = `<div class="gen-top"><p style="margin:0;font-size:13px;color:var(--fg-muted);max-width:52ch;line-height:1.5">Frame the view you want in 3D, then generate. AI keeps your booth's layout, colors and graphics and makes it look real.</p>
+        <div class="gen-credits"><div class="gen-chip"><b id="gen-img-left">${c.img} / ${c.imgTotal}</b><span>Images left</span></div><div class="gen-chip"><b id="gen-vid-left">${c.vid} / ${c.vidTotal}</b><span>Videos left</span></div></div></div>
+      <textarea class="gen-dir" id="gen-dir" rows="3" aria-label="Art direction" placeholder="Art direction (optional), e.g. busy show hours, warm evening light"></textarea>
+      <div class="gen-btns"><button class="btn btn-primary" id="gen-img">Generate image · 1 credit</button><button class="btn" id="gen-vid">Generate video · 1 credit</button></div>
+      <div class="gen-status" id="gen-status" aria-live="polite">Images take about 20 seconds. Videos take 1–3 minutes, and you can keep working meanwhile.</div>
+      <div class="ss-title">Your Generations</div><div class="gen-grid" id="gen-grid"></div>`;
+    const vp = document.getElementById('vp-dir'); document.getElementById('gen-dir').value = vp ? vp.value.slice(0, 600) : '';
+    document.getElementById('gen-img').onclick = () => start('image');
+    document.getElementById('gen-vid').onclick = () => start('video');
+    draw(); if (!live.loaded) loadList();
+  }
+
+  async function start(kind) {
+    const st = document.getElementById('gen-status'), btn = document.getElementById(kind === 'image' ? 'gen-img' : 'gen-vid');
+    const c = credits(); if (!c || (kind === 'image' ? c.img : c.vid) <= 0) { st.textContent = `No ${kind} credits left on your pass.`; return; }
+    btn.disabled = true; st.textContent = 'Capturing the current view…';
+    try {
+      const image = await captureView();
+      st.textContent = 'Sending to AI Render…';
+      const direction = (document.getElementById('gen-dir')?.value || '').trim();
+      const { id } = await api('/api/render', { method: 'POST', body: JSON.stringify({ kind, image, direction }) });
+      upsert({ id, kind, status: 'queued', created_at: new Date().toISOString() });
+      poll(id, kind); auth.refresh();
+      st.textContent = kind === 'image' ? 'Creating your image. It appears below in about 20 seconds.' : 'Creating your video. It appears below in 1–3 minutes; you can close this window and keep working.';
+    } catch (e) { st.textContent = e?.message || "AI Render couldn't start. Try again."; }
+    btn.disabled = false; draw();
+  }
+
+  function draw() {
+    const c = credits(), a = document.getElementById('gen-img-left');
+    if (a && c) { a.textContent = `${c.img} / ${c.imgTotal}`; document.getElementById('gen-vid-left').textContent = `${c.vid} / ${c.vidTotal}`; }
+    const grid = document.getElementById('gen-grid'); if (!grid) return;
+    grid.textContent = '';
+    if (!live.loaded) { grid.append(el('div', 'gen-empty', 'Loading your generations…')); return; }
+    if (!live.items.length) { const e = el('div', 'gen-empty', 'Your photo-realistic images and videos will appear here.'); e.style.gridColumn = '1/-1'; grid.append(e); return; }
+    live.items.forEach(it => {
+      const d = el('div', 'gen-item' + (it.status === 'done' ? ' done' : ''));
+      if (it.status === 'done' && it.result_url) {
+        if (it.kind === 'video') { const v = el('video'); v.src = it.result_url; v.controls = true; v.loop = true; v.muted = true; v.playsInline = true; v.preload = 'metadata'; d.append(v); }
+        else { const im = el('img'); im.src = it.result_url; im.alt = 'Photo-realistic render of the booth'; im.loading = 'lazy'; d.append(im); }
+        const open = el('a', 'gen-open', it.kind === 'video' ? 'Open video' : 'Open full size'); open.href = it.result_url; open.target = '_blank'; open.rel = 'noopener'; d.append(open);
+      } else {
+        const msg = it.status === 'failed' ? `Couldn't create this ${it.kind}. Your credit was returned.` : it.kind === 'video' ? 'Creating video… 1–3 minutes' : 'Creating image… about 20 seconds';
+        const t = el('div', 'gen-wait' + (it.status === 'failed' ? ' failed' : ''), msg); d.append(t);
+      }
+      grid.append(d);
+    });
+  }
+
+  // Replace the preview window and point the AI Render button at the live one.
+  window.openGenerate = openRender;
+  const btn = document.querySelector('.cv-gen'); if (btn) btn.onclick = openRender;
+  auth.onChange(st => { if (!st.user) { live.items = []; live.loaded = false; } draw(); });
+})();

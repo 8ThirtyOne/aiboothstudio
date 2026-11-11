@@ -68,6 +68,39 @@ export async function sharedDesign(token) {
   return rows && rows[0] ? rows[0] : null;
 }
 
+// ── AI Render: renders table, media credits and result storage
+export async function insertRender(row) {
+  const rows = await rest("renders", { method: "POST", body: row, prefer: "return=representation" });
+  return rows[0];
+}
+export async function getRender(id, owner) {
+  const rows = await rest(`renders?select=*&id=eq.${encodeURIComponent(id)}&owner=eq.${encodeURIComponent(owner)}&limit=1`);
+  return rows && rows[0] ? rows[0] : null;
+}
+export async function updateRender(id, fields) {
+  await rest(`renders?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: { ...fields, updated_at: new Date().toISOString() }, prefer: "return=minimal" });
+}
+export async function listRenders(owner) {
+  return rest(`renders?select=id,kind,status,result_url,error,created_at&owner=eq.${encodeURIComponent(owner)}&order=created_at.desc&limit=60`);
+}
+export async function useMediaCredit(passId, kind) {
+  return (await rest("rpc/use_media_credit", { method: "POST", body: { p_pass: passId, p_kind: kind } })) === true;
+}
+export async function refundMediaCredit(passId, kind) {
+  await rest("rpc/refund_media_credit", { method: "POST", body: { p_pass: passId, p_kind: kind } });
+}
+// Copies a finished file into the public "renders" bucket. Returns its public URL.
+export async function storeResult(path, bytes, contentType) {
+  const base = process.env.SUPABASE_URL.replace(/\/+$/, "");
+  const r = await fetch(`${base}/storage/v1/object/renders/${path}`, {
+    method: "POST",
+    headers: { apikey: process.env.SUPABASE_SECRET_KEY, "Content-Type": contentType, "x-upsert": "true" },
+    body: bytes,
+  });
+  if (!r.ok) throw new Error(`storage upload ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  return `${base}/storage/v1/object/public/renders/${path}`;
+}
+
 // Uses one AI design action on a pass. Returns true if one was available and used.
 export async function useAiAction(passId) {
   const ok = await rest("rpc/use_ai_action", { method: "POST", body: { p_pass: passId } });

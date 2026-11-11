@@ -37,5 +37,7 @@ window.THREE = Object.assign({}, T, {
 const app = document.createElement("script");
 app.src = "/app/app.js";
 // Account designs, autosave and share links build on the app, so they load once it has started.
-app.onload = () => { const cloud = document.createElement("script"); cloud.src = "/app/cloud.js"; document.body.append(cloud); };
+app.onload = () => {
+  ["/app/cloud.js", "/app/ai-render.js"].forEach(src => { const s = document.createElement("script"); s.src = src; s.async = false; document.body.append(s); });
+};
 document.body.append(app);

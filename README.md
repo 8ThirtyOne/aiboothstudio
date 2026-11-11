@@ -9,6 +9,8 @@ Landing site and 3D trade show booth designer, staged at `staging.aiboothstudio.
 | `app/app.css`, `app/app.js` | The designer's styles and code |
 | `app/three-loader.js` | Loads three.js r170 and keeps r128-era colors and lighting, then starts the app |
 | `app/cloud.js` | Designs saved to accounts, autosave, share links and the view-only mode (`/app/?view=…`) |
+| `app/ai-render.js` | AI Render, live: photo-realistic images and videos using pass credits |
+| `api/render.js` | Starts and tracks fal.ai renders (FAL_KEY), uses and refunds credits, stores results |
 | `models/` | Real 3D models (CC0, Poly Haven) that replace built-in shapes; see models/README.md |
 | `api/share.js` | Serves a shared design to its view-only link |
 | `img/` | Images and the hero video |
@@ -23,6 +25,7 @@ Landing site and 3D trade show booth designer, staged at `staging.aiboothstudio.
 | `supabase/schema.sql` | Database setup, run once in the Supabase SQL Editor |
 | `supabase/002_ai_limits.sql` | Adds AI action limits per pass; run after schema.sql |
 | `supabase/003_designs.sql` | Designs table for saved designs and share links |
+| `supabase/004_renders.sql` | Renders table, image and video credit functions, public "renders" storage bucket |
 | `terms/`, `privacy/`, `refunds/` | Legal pages (drafts: fill in the highlighted details and have them reviewed) |
 
 ## Hosting (Vercel)
@@ -36,7 +39,6 @@ Every push to `main` deploys; every other branch gets its own preview link.
 
 ## Not live yet (placeholders)
 
-- AI Render image and video generation.
 - Set AI_REQUIRE_PASS=1 in Vercel to limit AI features to signed-in customers with an active pass.
 - The site is marked `noindex` so search engines skip it while it's a test site.
 
