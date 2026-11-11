@@ -30,3 +30,9 @@ create policy "read own passes" on public.passes
   using (lower(email) = lower(auth.jwt() ->> 'email'));
 
 -- No insert, update or delete policies on purpose: only the server can change passes.
+
+-- The project does not expose new tables automatically, so grant access explicitly:
+-- signed-in customers may read (filtered by the policy above); the server's secret key may do everything.
+revoke all on public.passes from anon, authenticated;
+grant select on public.passes to authenticated;
+grant all on public.passes to service_role;
