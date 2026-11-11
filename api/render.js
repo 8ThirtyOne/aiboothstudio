@@ -6,13 +6,24 @@
 import { activePass, dbConfigured, getRender, insertRender, listRenders, refundMediaCredit, storeResult, updateRender, useMediaCredit, userFromToken } from "./_db.js";
 
 const MODELS = {
-  image: process.env.FAL_IMAGE_MODEL || "fal-ai/flux-pro/kontext",
+  image: process.env.FAL_IMAGE_MODEL || "fal-ai/nano-banana/edit",
   video: process.env.FAL_VIDEO_MODEL || "fal-ai/kling-video/v2.1/standard/image-to-video",
 };
 
 const PROMPTS = {
-  image: dir => `Turn this 3D render of a trade show booth into an ultra-realistic professional photograph taken at a real convention center. Keep the booth's exact layout, structures, proportions, colors, graphics, logos and wording. Use realistic materials (tension fabric, aluminum, wood, carpet, glass), natural exhibition hall lighting and sharp, true-to-life detail.${dir ? " " + dir : ""}`,
-  video: dir => `A smooth, slow cinematic camera move around this trade show booth at a busy convention center, photo-realistic, with realistic visitors walking past. Keep the booth's exact design, structures, colors, logos and wording.${dir ? " " + dir : ""}`,
+  image: dir => [
+    "Transform this computer-generated 3D render into a real photograph of a trade show booth, taken with a professional camera at a real convention center.",
+    "The result must not look like a 3D render: replace every flat, synthetic surface with real materials, such as printed tension fabric graphics, brushed aluminum frames, real carpet texture, glossy laminate, wood grain and glass, with real reflections, soft shadows and natural light falloff.",
+    "Replace the simple placeholder figures with realistic people in business attire, and make the surrounding booths and hall look like a real, detailed exhibition hall with a ceiling, lights and signage.",
+    "Keep this booth exactly as designed: same camera angle, layout, size, structures, furniture positions, colors, logos and all wording.",
+    dir ? `Photo style: ${dir}` : "",
+  ].filter(Boolean).join(" "),
+  video: dir => [
+    "Real camera footage, not a 3D animation: a smooth, slow cinematic camera move toward this trade show booth at a busy, real convention center.",
+    "Photo-realistic materials and lighting, real people in business attire walking past and talking at the booth instead of placeholder figures.",
+    "Keep the booth's exact design, structures, colors, logos and wording.",
+    dir ? `Style: ${dir}` : "",
+  ].filter(Boolean).join(" "),
 };
 
 const fal = (url, init = {}) => fetch(url, { ...init, headers: { Authorization: `Key ${process.env.FAL_KEY}`, "Content-Type": "application/json", ...(init.headers || {}) } });
@@ -45,9 +56,12 @@ export default async function handler(req, res) {
       if (!(await useMediaCredit(pass.id, kind))) return res.status(429).json({ code: "no_credits", message: `You've used all the AI ${kind}s on your pass.` });
 
       const prompt = PROMPTS[kind](String(direction || "").trim().slice(0, 600));
-      const input = kind === "image"
-        ? { prompt, image_url: `data:image/jpeg;base64,${image}`, output_format: "jpeg" }
-        : { prompt, image_url: `data:image/jpeg;base64,${image}`, duration: "5" };
+      const dataUri = `data:image/jpeg;base64,${image}`;
+      const input = kind === "video"
+        ? { prompt, image_url: dataUri, duration: "5" }
+        : MODELS.image.includes("nano-banana")
+          ? { prompt, image_urls: [dataUri], num_images: 1, output_format: "jpeg", limit_generations: true }
+          : { prompt, image_url: dataUri, output_format: "jpeg", guidance_scale: 5 };
       const sub = await fal(`https://queue.fal.run/${MODELS[kind]}`, { method: "POST", body: JSON.stringify(input) });
       const job = await sub.json().catch(() => ({}));
       if (!sub.ok || !job.request_id) {
