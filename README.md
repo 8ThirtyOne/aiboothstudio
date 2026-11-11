@@ -9,7 +9,7 @@ Landing site and 3D trade show booth designer, staged at `staging.aiboothstudio.
 | `img/` | Images and the hero video |
 | `js/claude-shim.js` | Lets the pages run outside claude.ai: AI requests go to `/api/claude`, file saves become normal downloads |
 | `api/claude.js` | Server function that calls the Claude API for AI Build, photo to 3D and prompt writing |
-| `api/contact.js` | Contact form endpoint (logs messages for now) |
+| `api/contact.js` | Contact form endpoint: emails messages through Resend (RESEND_API_KEY, CONTACT_TO, CONTACT_FROM) |
 | `api/checkout.js` | Starts a Stripe Checkout payment for a pass (prices in `api/_plans.js`) |
 | `api/stripe-webhook.js` | Receives Stripe payment notices, checks the signature, emails the owner |
 | `thanks/index.html` | Page shown after a successful payment |
@@ -27,7 +27,6 @@ Every push to `main` deploys; every other branch gets its own preview link.
 
 - Sign-in and accounts, and AI Render image and video generation.
 - Stripe checkout works, but a purchase does not switch on a pass yet (accounts come first).
-- The contact form only logs messages to Vercel's function logs.
 - The site is marked `noindex` so search engines skip it while it's a test site.
 
 ## Notes
