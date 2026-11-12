@@ -2524,7 +2524,8 @@ function drawOverlay() {
 
 function togglePanel() {
   const hide = document.body.classList.toggle("panel-hidden");
-  document.getElementById("panel-btn").textContent = hide ? "Show Control Panel" : "Hide Control Panel";
+  const pb = document.getElementById("panel-btn"), label = hide ? "Show Control Panel" : "Hide Control Panel";
+  pb.setAttribute("aria-label", label); pb.dataset.tip = label; pb.classList.toggle("on", hide);
   resize(); markDirty();
 }
 async function toggleFullscreen() {
@@ -3530,7 +3531,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v64'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v65'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);
@@ -3600,7 +3601,7 @@ async function importDesignFile(e) {
     const k = (b.getAttribute('onclick').match(/'([\w]+)'/) || [])[1];
     if (icons[k]) b.insertAdjacentHTML('afterbegin', svg(icons[k]));
   });
-  const relabel = { "Persp": "3D", "Eye level": "Eye", "Dimensions": "Booth size", "Clear measures": "Clear", "Hide panel": "Hide Control Panel", "Full screen": "Full screen" };
+  const relabel = { "Persp": "3D", "Eye level": "Eye", "Dimensions": "Booth size", "Clear measures": "Clear", "Full screen": "Full screen" };
   document.querySelectorAll(".cv-bottom .vbtn, .cv-top-right .btn").forEach(b => { const t = b.textContent.trim(); if (relabel[t]) { b.title = t; b.setAttribute("aria-label", t); b.textContent = relabel[t]; } });
   resize();
 })();
