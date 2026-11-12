@@ -73,7 +73,7 @@ export default async function handler(req, res) {
         ["Amount", esc(paid)],
         ["Customer", `<a href="mailto:${esc(email)}" style="color:#2563eb;text-decoration:none">${esc(email)}</a>`],
       ];
-      if (plan) rows.push(["Includes", esc(`${plan.days} days, ${plan.ai} AI design actions, ${plan.images} AI images, ${plan.videos} AI video${plan.videos === 1 ? "" : "s"}`)]);
+      if (plan) rows.push(["Includes", esc(`${plan.days} days, ${plan.ai} AI design actions, ${plan.images} AI images, ${plan.videos} 10-second AI video${plan.videos === 1 ? "" : "s"}`)]);
       rows.push(["Mode", test ? "Test payment" : "Live payment"]);
       const html = brandedEmail({
         eyebrow: test ? "Payment received · test" : "Payment received",
@@ -91,7 +91,7 @@ export default async function handler(req, res) {
         const site = `https://${req.headers["x-forwarded-host"] || req.headers.host}`;
         const endsAt = newRow?.ends_at ? new Date(newRow.ends_at) : new Date(Date.now() + plan.days * 864e5);
         const until = endsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
-        const includes = `${plan.days} days of full access, ${plan.ai} AI design actions, ${plan.images} AI images, ${plan.videos} AI video${plan.videos === 1 ? "" : "s"}`;
+        const includes = `${plan.days} days of full access, ${plan.ai} AI design actions, ${plan.images} AI images, ${plan.videos} 10-second AI video${plan.videos === 1 ? "" : "s"}`;
         const steps = recorded
           ? `1. Open the app and click <b>Sign in</b>.<br>2. Enter <b>${esc(email)}</b> and open the sign-in link we email you.<br>3. Your pass and credits appear under <b>Account</b>.`
           : "Your pass is being switched on and will be ready shortly. We'll be in touch if anything is needed.";

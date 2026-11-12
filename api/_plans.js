@@ -13,6 +13,6 @@ export const PLANS = {
 // They last as long as that pass. Margins: image ~89%, video ~78% even with a premium video model.
 export const ADDONS = {
   image: { name: "Extra AI image", plural: "Extra AI images", amount: 700 },
-  video: { name: "Extra AI video", plural: "Extra AI videos", amount: 1500 },
+  video: { name: "Extra 10-second AI video", plural: "Extra 10-second AI videos", amount: 1500 },
 };
 export const ADDON_MAX_QTY = 20;
