@@ -6,7 +6,7 @@
 import crypto from "node:crypto";
 import { ADDONS, PLANS } from "./_plans.js";
 import { brandedEmail, esc, sendToCustomer, sendToOwner } from "./_email.js";
-import { addAiActions, addMediaCredits, dbConfigured, passById, recordPass, recordTopup } from "./_db.js";
+import { addAiActions, addMediaCredits, dbConfigured, endPassForRefund, passById, passBySession, recordPass, recordTopup, takeBackTopup, topupBySession } from "./_db.js";
 
 const TOLERANCE_SECONDS = 300;
 
@@ -42,6 +42,8 @@ export default async function handler(req, res) {
 
   let event;
   try { event = JSON.parse(raw.toString("utf8")); } catch { return res.status(400).json({ error: "bad_json" }); }
+
+  if (event.type === "charge.refunded") return handleRefund(res, event);
 
   if (event.type === "checkout.session.completed") {
     const s = event.data?.object || {};
@@ -182,5 +184,61 @@ async function handleTopup(req, res, event, s) {
       }),
     });
   }
+  return res.status(200).json({ received: true });
+}
+
+// Refunds. A full refund ends the pass right away, or takes back the extras that were bought.
+// A partial refund changes nothing automatically; you get an email to decide.
+async function handleRefund(res, event) {
+  const ch = event.data?.object || {};
+  const pi = typeof ch.payment_intent === "string" ? ch.payment_intent : ch.payment_intent?.id;
+  const full = !!ch.refunded, test = !event.livemode;
+  const money = c => `$${(c / 100).toFixed(2)}`;
+  console.log("refund", JSON.stringify({ mode: test ? "TEST" : "LIVE", pi, full, refunded: ch.amount_refunded, of: ch.amount }));
+  if (!pi || !dbConfigured() || !process.env.STRIPE_SECRET_KEY) return res.status(200).json({ received: true });
+
+  // Which purchase was this? Find its checkout session, then the pass or extras recorded for it.
+  let session = null;
+  try {
+    const r = await fetch(`https://api.stripe.com/v1/checkout/sessions?payment_intent=${encodeURIComponent(pi)}&limit=1`, { headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` } });
+    session = (await r.json())?.data?.[0] || null;
+  } catch (err) { console.error("refund lookup failed", err?.message); return res.status(500).json({ error: "lookup_failed" }); }
+  if (!session) return res.status(200).json({ received: true, unknown: true });
+
+  let what = "", outcome = "";
+  try {
+    const pass = await passBySession(session.id), topup = pass ? null : await topupBySession(session.id);
+    const email = pass?.email || topup?.email || session.customer_details?.email || "unknown";
+    if (pass) {
+      what = `${PLANS[pass.plan]?.name || pass.plan} for ${email}`;
+      if (!full) outcome = "Partial refund: the pass is still active. End it in Supabase if needed.";
+      else outcome = (await endPassForRefund(pass.id)) ? "The pass has been ended, so the customer no longer has access." : "This refund was already handled.";
+    } else if (topup) {
+      const noun = topup.kind === "ai" ? "AI Build actions" : topup.kind === "video" ? "10-second AI videos" : "AI images";
+      what = `${topup.qty} extra ${noun} for ${email}`;
+      if (!full) outcome = "Partial refund: the extras are still on the pass.";
+      else outcome = (await takeBackTopup(topup)) ? "The extras were taken back from the pass (any already used stay used)." : "This refund was already handled.";
+    } else {
+      return res.status(200).json({ received: true, unknown: true });
+    }
+  } catch (err) {
+    console.error("refund failed", err?.message);
+    return res.status(500).json({ error: "refund_failed" }); // Stripe retries later
+  }
+
+  const dashboard = `https://dashboard.stripe.com/${test ? "test/" : ""}payments/${pi}`;
+  const amount = `${money(ch.amount_refunded || 0)} of ${money(ch.amount || 0)}`;
+  await sendToOwner({
+    subject: `${test ? "[Test] " : ""}Refund: ${what} (${amount})`,
+    text: `${full ? "Full" : "Partial"} refund of ${amount}: ${what}.\n${outcome}\n${dashboard}`,
+    html: brandedEmail({
+      eyebrow: test ? "Refund · test" : "Refund",
+      title: `${full ? "Refunded" : "Partly refunded"}: ${what}`,
+      rows: [["Refunded", esc(amount)], ["Purchase", esc(what)], ["Mode", test ? "Test payment" : "Live payment"]],
+      panelHtml: esc(outcome),
+      button: { href: dashboard, label: "View in Stripe" },
+      footer: `Stripe session ${session.id}`,
+    }),
+  });
   return res.status(200).json({ received: true });
 }

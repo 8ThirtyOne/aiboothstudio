@@ -127,3 +127,29 @@ export async function passById(id) {
   const rows = await rest(`passes?select=*&id=eq.${encodeURIComponent(id)}&limit=1`);
   return rows && rows[0] ? rows[0] : null;
 }
+
+// ── Refunds (needs supabase/007_refunds.sql)
+export async function passBySession(session) {
+  const rows = await rest(`passes?select=*&stripe_session=eq.${encodeURIComponent(session)}&limit=1`);
+  return rows && rows[0] ? rows[0] : null;
+}
+export async function topupBySession(session) {
+  const rows = await rest(`credit_purchases?select=*&stripe_session=eq.${encodeURIComponent(session)}&limit=1`);
+  return rows && rows[0] ? rows[0] : null;
+}
+// Ends a refunded pass now. Returns the pass if this call ended it, or null if it was already handled.
+export async function endPassForRefund(id) {
+  const now = new Date().toISOString();
+  const rows = await rest(`passes?id=eq.${encodeURIComponent(id)}&refunded_at=is.null`, { method: "PATCH", body: { ends_at: now, refunded_at: now }, prefer: "return=representation" });
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+// Takes back refunded extras from their pass (never below what's already been used). Returns the updated pass, or null if already handled.
+export async function takeBackTopup(t) {
+  const marked = await rest(`credit_purchases?id=eq.${encodeURIComponent(t.id)}&refunded_at=is.null`, { method: "PATCH", body: { refunded_at: new Date().toISOString() }, prefer: "return=representation" });
+  if (!Array.isArray(marked) || !marked[0] || !t.pass_id) return null;
+  const pass = await passById(t.pass_id); if (!pass) return null;
+  const col = t.kind === "ai" ? ["ai_total", "ai_used"] : t.kind === "video" ? ["videos_total", "videos_used"] : ["images_total", "images_used"];
+  const next = Math.max(pass[col[1]], pass[col[0]] - t.qty);
+  const rows = await rest(`passes?id=eq.${encodeURIComponent(pass.id)}`, { method: "PATCH", body: { [col[0]]: next }, prefer: "return=representation" });
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
