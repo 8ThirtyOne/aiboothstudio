@@ -596,3 +596,14 @@ a.logo:hover { opacity: .8; }
 .screen-note .screen-note-small { font-size: 13px; }
 .screen-note-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .screen-note-btns .btn { height: 42px; font-size: 14px; font-weight: 700; border-radius: 999px; justify-content: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Artwork size choice */
+.art-fit { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 3px; border-radius: 9px; background: var(--panel2); }
+.art-fit .btn { border: 0; background: transparent; box-shadow: none; font-weight: 700; }
+.art-fit .btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.art-fit .btn:disabled { opacity: .45; cursor: not-allowed; }
+.art-fit-note { font-size: 11px; line-height: 1.4; color: var(--fg-muted); }
+
+/* Undo / redo */
+.icon-btn:disabled { opacity: .4; cursor: default; }
+.icon-btn:disabled::after { display: none; }

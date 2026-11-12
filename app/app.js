@@ -1462,7 +1462,15 @@ function beginDrag(cx, cy) {
 }
 function moveDrag(cx, cy) {
   aimRay(cx, cy);
-  if (dragging.art) { const s = surfaceHit(); if (s) { dragging.art.pos = s.p; dragging.art.normal = s.n; poseArt(dragging.art); } return; }
+  if (dragging.art) {
+    const s = surfaceHit(), a = dragging.art; if (!s) return;
+    a.pos = s.p; a.normal = s.n;
+    if (a.fit === 'fill') {
+      const face = s.obj ? panelFace(s.obj, s.n, s.p) : null;
+      if (face) a.face = face; else { a.widthFt = Math.max(.25, Math.round(a.face.w / FT * 4) / 4); a.fit = 'fit'; a.face = null; renderArtList(); }
+    } else a.face = s.obj ? panelFace(s.obj, s.n, s.p) : null;
+    poseArt(a); return;
+  }
   const hit = dragRay.ray.intersectPlane(floorPlane, new THREE.Vector3()); if (!hit) return;
   const { w, d } = getSZ(), { obj } = dragging, b = obj.userData.base;
   const free = isStructureKey(obj.userData.dragKey), px = obj.position.x, pz = obj.position.z;
@@ -1546,7 +1554,7 @@ function onArtFiles(e) {
   [...e.target.files].forEach(file => {
     const url = URL.createObjectURL(file), img = new Image();
     img.onload = () => {
-      const a = { id: ++artSeq, kind: artUploadKind, name: file.name, url, img, widthFt: ART_WIDTH_FT[artUploadKind], rot: 0, aspect: (img.naturalHeight || 1) / (img.naturalWidth || 1), mesh: null };
+      const a = { id: ++artSeq, kind: artUploadKind, name: file.name, url, img, widthFt: ART_WIDTH_FT[artUploadKind], rot: 0, fit: 'fit', face: null, aspect: (img.naturalHeight || 1) / (img.naturalWidth || 1), mesh: null };
       if (!placeOnPanel(a)) placeAtViewCenter(a);
       artItems.push(a);
       artSelected = a.id;
@@ -1564,7 +1572,7 @@ function surfaceHit() {
     for (let o = h.object; o; o = o.parent) if (o.userData.artId) return false;
     return !!h.face;
   });
-  if (hit) return { p: hit.point.clone(), n: hit.face.normal.clone().transformDirection(hit.object.matrixWorld) };
+  if (hit) { let o = hit.object; while (o.parent && o.parent !== boothG) o = o.parent; return { p: hit.point.clone(), n: hit.face.normal.clone().transformDirection(hit.object.matrixWorld), obj: o.parent === boothG ? o : null }; }
   const p = dragRay.ray.intersectPlane(floorPlane, new THREE.Vector3());
   return p ? { p, n: new THREE.Vector3(0, 1, 0) } : null;
 }
@@ -1573,14 +1581,40 @@ function placeAtViewCenter(a) {
   aimRay(r.left + r.width / 2, r.top + r.height / 2);
   const s = surfaceHit() || { p: new THREE.Vector3(0, 1.5, 0), n: new THREE.Vector3(0, 0, 1) };
   a.pos = s.p; a.normal = s.n;
+  a.face = s.obj ? panelFace(s.obj, s.n, s.p) : null;
+  if (a.kind === 'artwork' && a.face) a.fit = 'fill';
+}
+// The flat face of a booth part that artwork sits on: its center on the surface, and its width and height in meters.
+// Floors and tiny parts don't count, so artwork there keeps its own size.
+function panelFace(obj, n, point) {
+  if (!obj || Math.abs(n.y) > .7) return null;
+  const box = new THREE.Box3().setFromObject(obj), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
+  const side = Math.abs(n.x) > Math.abs(n.z) ? new THREE.Vector3(Math.sign(n.x) || 1, 0, 0) : new THREE.Vector3(0, 0, Math.sign(n.z) || 1);
+  const w = side.x ? s.z : s.x, hgt = s.y;
+  if (w < .3 || hgt < .3) return null;
+  const onFace = c.clone().addScaledVector(side, (point ? point.clone().sub(c).dot(side) : (side.x ? s.x : s.z) / 2));
+  return { c: onFace, n: side, w, h: hgt };
 }
 function poseArt(a) {
   const m = a.mesh; if (!m) return;
-  const w = a.widthFt * FT;
-  m.scale.set(w, w * a.aspect, 1);
-  m.position.copy(a.pos).addScaledVector(a.normal, .008);
-  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), a.normal);
-  m.rotateZ(a.rot * Math.PI / 180);
+  const t = m.material.map, fill = a.fit === 'fill' && a.face;
+  if (fill) {
+    const { w, h } = a.face, img = a.aspect, face = h / w;
+    m.scale.set(w, h, 1);
+    m.position.copy(a.face.c).addScaledVector(a.face.n, .008);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), a.face.n);
+    if (t) {
+      if (img > face) { t.repeat.set(1, face / img); t.offset.set(0, (1 - face / img) / 2); }
+      else { t.repeat.set(img / face, 1); t.offset.set((1 - img / face) / 2, 0); }
+    }
+  } else {
+    const w = a.widthFt * FT;
+    m.scale.set(w, w * a.aspect, 1);
+    m.position.copy(a.pos).addScaledVector(a.normal, .008);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), a.normal);
+    m.rotateZ(a.rot * Math.PI / 180);
+    if (t) { t.repeat.set(1, 1); t.offset.set(0, 0); }
+  }
   markDirty();
 }
 function addArtMesh(a) {
@@ -1596,8 +1630,7 @@ function addArtMesh(a) {
 function buildArt() { artItems.forEach(addArtMesh); }
 function removeArt(a) {
   if (a.mesh) { dispose(a.mesh); boothG.remove(a.mesh); }
-  artItems.splice(artItems.indexOf(a), 1);
-  URL.revokeObjectURL(a.url);
+  artItems.splice(artItems.indexOf(a), 1); // the image stays loaded so Undo can bring it back
   if (artSelected === a.id) artSelected = null;
   renderArtList();
   markDirty();
@@ -1626,7 +1659,20 @@ function renderArtList() {
       inp.oninput = () => { set(+inp.value); v.textContent = fmt(+inp.value); poseArt(a); };
       box.append(lb, inp); return box;
     };
-    row.append(head,
+    const mode = document.createElement('div'); mode.className = 'art-fit'; mode.setAttribute('role', 'group'); mode.setAttribute('aria-label', 'Size of ' + a.name);
+    [['fit', 'Own size'], ['fill', 'Fill panel']].forEach(([k, label]) => {
+      const b = document.createElement('button'); b.className = 'btn btn-sm' + ((a.fit || 'fit') === k ? ' active' : ''); b.textContent = label;
+      b.setAttribute('aria-pressed', (a.fit || 'fit') === k);
+      if (k === 'fill' && !a.face) { b.disabled = true; b.title = 'Drag the artwork onto a wall or panel first'; }
+      b.onclick = ev => { ev.stopPropagation(); if (k === 'fill' && !a.face) return; a.fit = k; if (k === 'fit' && a.face) { a.pos = a.face.c.clone(); a.normal = a.face.n.clone(); } poseArt(a); renderArtList(); };
+      mode.append(b);
+    });
+    row.append(head, mode);
+    if (a.fit === 'fill' && a.face) {
+      const note = document.createElement('div'); note.className = 'art-fit-note';
+      note.textContent = `Fills the ${fmtFt(a.face.w / FT)} × ${fmtFt(a.face.h / FT)} panel, cropped evenly to keep its shape.`;
+      row.append(note);
+    } else row.append(
       slider('Width', .25, 40, .25, a.widthFt, x => x + ' ft', x => { a.widthFt = x; }),
       slider('Rotation', -180, 180, 5, a.rot, x => x + '°', x => { a.rot = x; }));
     wrap.append(row);
@@ -1810,6 +1856,8 @@ function placeOnPanel(a) {
   a.normal = n; a.host = p.key;
   const faceW = Math.abs(n.y) > .7 ? Math.max(s.x, s.z) : Math.abs(n.x) > .7 ? s.z : s.x, faceH = Math.abs(n.y) > .7 ? Math.min(s.x, s.z) : s.y;
   a.widthFt = Math.max(.25, Math.round(Math.min(faceW, faceH / a.aspect) * .9 / FT * 4) / 4);
+  a.face = Math.abs(n.y) > .7 ? null : { c: a.pos.clone(), n: n.clone(), w: faceW, h: faceH };
+  if (a.face && a.kind === 'artwork') a.fit = 'fill';
   return true;
 }
 
@@ -3532,7 +3580,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v70'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v71'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);
@@ -3949,3 +3997,104 @@ resize();
 
 // INIT
 loadStartupScene();
+
+// ═══ Undo / redo: a history of design snapshots ═══
+// A snapshot is taken after each finished change (a click, a drag, a picked value), never mid-drag or while typing.
+// Camera moves aren't part of the design, so orbiting never fills the history.
+(function undoHistory() {
+  const LIMIT = 50, past = [], future = [];
+  const artPool = new Map(); // every artwork ever added, so Undo can bring a removed one back
+  const v3 = v => (v ? [v.x, v.y, v.z] : null), toV3 = a => (a ? new THREE.Vector3(a[0], a[1], a[2]) : null);
+  const artState = () => artItems.map(a => {
+    artPool.set(a.id, a);
+    return { id: a.id, pos: v3(a.pos), normal: v3(a.normal), widthFt: a.widthFt, rot: a.rot, fit: a.fit || 'fit', host: a.host || null,
+      face: a.face ? { c: v3(a.face.c), n: v3(a.face.n), w: a.face.w, h: a.face.h } : null };
+  });
+  const snap = () => JSON.stringify({ d: serializeDesign(), art: artState() });
+  let current = null, pointerDown = false, timer = 0, restoring = false;
+
+  function restore(json) {
+    restoring = true;
+    const { d, art } = JSON.parse(json);
+    // Artwork first, so the rebuild below draws exactly these pieces
+    artItems.length = 0;
+    art.forEach(s => { const a = artPool.get(s.id); if (!a) return;
+      Object.assign(a, { pos: toV3(s.pos), normal: toV3(s.normal), widthFt: s.widthFt, rot: s.rot, fit: s.fit, host: s.host,
+        face: s.face ? { c: toV3(s.face.c), n: toV3(s.face.n), w: s.face.w, h: s.face.h } : null });
+      artItems.push(a); });
+    if (artSelected && !artItems.some(a => a.id === artSelected)) artSelected = null;
+    // Same as opening a design, but the camera and show floor stay as they are
+    const env = d.env; delete d.env;
+    const full = { ...blankDesign(), ...d };
+    DESIGN_KEYS.forEach(k => { if (full[k] !== undefined) S[k] = full[k]; });
+    S.els = { ...blankDesign().els, ...(full.els || {}) };
+    S.brand = { ...blankDesign().brand, ...(full.brand || {}) };
+    S.furn = new Set(full.furn || []);
+    S.placed = full.placed || []; S.added = full.added || []; S.edits = full.edits || {}; S.drags = full.drags || {};
+    S.recon = full.recon || null; selKey = null; selObj = null; if (typeof selArt !== 'undefined') selArt = null;
+    addSeq = Math.max(0, ...S.added.map(a => num(a.id)));
+    syncControls();
+    rebuildBooth();
+    if (env && env !== currentEnv) { const b = document.getElementById('env-' + env); if (b) setEnv(env, b); }
+    renderArtList();
+    if (typeof syncSelection === 'function') syncSelection();
+    current = snap();
+    restoring = false;
+    draw();
+  }
+
+  function check() {
+    timer = 0;
+    if (restoring || pointerDown) return;
+    const el = document.activeElement;
+    if (el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && /^(text|search|email|number|)$/.test(el.type)))) return; // typing: wait for change/blur
+    let now; try { now = snap(); } catch { return; }
+    if (current === null) { current = now; return; }
+    if (now === current) return;
+    past.push(current); if (past.length > LIMIT) past.shift();
+    future.length = 0;
+    current = now;
+    draw();
+  }
+  const soon = (ms = 250) => { clearTimeout(timer); timer = setTimeout(check, ms); };
+
+  function undo() { check(); if (!past.length) return; future.push(current); restore(past.pop()); }
+  function redo() { if (!future.length) return; past.push(current); restore(future.pop()); }
+  window.undoDesign = undo; window.redoDesign = redo;
+
+  // Buttons, next to the control panel button
+  const bar = document.querySelector('.cv-top-right'), panelBtn = document.getElementById('panel-btn');
+  const mk = (id, label, key, path, fn) => {
+    const b = document.createElement('button'); b.className = 'btn btn-sm icon-btn'; b.id = id; b.onclick = fn;
+    b.setAttribute('aria-label', label); b.dataset.tip = `${label} (${key})`;
+    b.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+    return b;
+  };
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent), mod = mac ? '⌘' : 'Ctrl+';
+  const ub = mk('undo-btn', 'Undo', mod + 'Z', '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>', undo);
+  const rb = mk('redo-btn', 'Redo', mac ? '⇧⌘Z' : 'Ctrl+Y', '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>', redo);
+  if (bar) bar.insertBefore(rb, panelBtn && panelBtn.parentElement === bar ? panelBtn : bar.firstChild), bar.insertBefore(ub, rb);
+  function draw() { ub.disabled = !past.length; rb.disabled = !future.length; }
+
+  // When to look for a finished change
+  document.addEventListener('pointerdown', () => { pointerDown = true; }, true);
+  document.addEventListener('pointerup', () => { pointerDown = false; soon(); }, true);
+  document.addEventListener('pointercancel', () => { pointerDown = false; soon(); }, true);
+  ['change', 'click', 'drop'].forEach(t => document.addEventListener(t, () => soon(), true));
+  document.addEventListener('focusout', () => soon(), true);
+  document.addEventListener('keyup', e => { if (!/^(Meta|Control|Shift|Alt)$/.test(e.key)) soon(400); }, true);
+  setInterval(() => { if (!timer) check(); }, 1500); // changes that finish on their own, such as AI Build
+
+  // Keyboard: Cmd/Ctrl+Z, Cmd+Shift+Z or Ctrl+Y. Text fields keep their own undo.
+  window.addEventListener('keydown', e => {
+    if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+    const el = document.activeElement;
+    if (el && (el.tagName === 'TEXTAREA' || el.isContentEditable || (el.tagName === 'INPUT' && !/^(range|checkbox|radio|color|button)$/.test(el.type)))) return;
+    const k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+    else if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); redo(); }
+  });
+
+  draw();
+  setTimeout(check, 1200); // starting point once the first design has loaded
+})();
