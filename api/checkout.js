@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   if (body.addon != null) {
     const addonId = String(body.addon), addon = ADDONS[addonId];
     const qty = Math.floor(Number(body.qty));
-    if (!addon || !(qty >= 1 && qty <= ADDON_MAX_QTY)) return res.status(400).json({ code: "bad_request", message: `Choose image or video credits, 1 to ${ADDON_MAX_QTY}.` });
+    if (!addon || !(qty >= 1 && qty <= ADDON_MAX_QTY)) return res.status(400).json({ code: "bad_request", message: `Choose images, videos or AI Build actions, 1 to ${ADDON_MAX_QTY}.` });
     if (!dbConfigured()) return res.status(503).json({ code: "not_configured", message: "Buying extra credits isn't set up yet." });
     const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
     const user = await userFromToken(token).catch(() => null);
@@ -33,13 +33,15 @@ export default async function handler(req, res) {
       "line_items[0][price_data][currency]": "usd",
       "line_items[0][price_data][unit_amount]": String(addon.amount),
       "line_items[0][price_data][product_data][name]": `AI Booth Studio ${addon.name}`,
-      "line_items[0][price_data][product_data][description]": `Added to your pass for photo-realistic AI Render ${addonId}s. Use them by ${until}, when your pass ends.`,
+      "line_items[0][price_data][product_data][description]": addonId === "ai"
+        ? `Each pack adds 10 AI Build actions to your pass (AI Build, photo to 3D, prompt writing). Use them by ${until}, when your pass ends.`
+        : `Added to your pass for photo-realistic AI Render ${addonId === "video" ? "10-second videos" : "images"}. Use them by ${until}, when your pass ends.`,
       "metadata[addon]": addonId,
       "metadata[qty]": String(qty),
       "metadata[pass_id]": pass.id,
       "payment_intent_data[metadata][addon]": addonId,
       "payment_intent_data[metadata][qty]": String(qty),
-      success_url: `${origin}/app/?credits=added`,
+      success_url: `${origin}/app/?credits=added&kind=${addonId}`,
       cancel_url: `${origin}/app/`,
     });
   } else {
@@ -52,7 +54,7 @@ export default async function handler(req, res) {
       "line_items[0][price_data][currency]": "usd",
       "line_items[0][price_data][unit_amount]": String(plan.amount),
       "line_items[0][price_data][product_data][name]": `AI Booth Studio ${plan.name}`,
-      "line_items[0][price_data][product_data][description]": `${plan.days} days of full access, ${plan.ai} AI design actions, ${plan.images} AI images and ${plan.videos} 10-second AI video${plan.videos === 1 ? "" : "s"}. One-time payment, no subscription.`,
+      "line_items[0][price_data][product_data][description]": `${plan.days} days of full access, ${plan.ai} AI Build actions, ${plan.images} AI images and ${plan.videos} 10-second AI video${plan.videos === 1 ? "" : "s"}. One-time payment, no subscription.`,
       customer_creation: "always",
       billing_address_collection: "auto",
       "metadata[plan]": planId,

@@ -42,6 +42,8 @@
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const fallback = res.status === 504 ? 'The AI took too long to answer. Try again.' : `The AI service returned an error (${res.status}).`;
+      // Out of AI Build actions: offer a pack of 10 right away
+      if (data.code === 'ai_limit' && window.openBuyExtras) setTimeout(() => window.openBuyExtras('ai'), 1200);
       throw { code: data.code || 'server_error', message: data.message || fallback };
     }
     if (opts.onText) opts.onText({ text: data.text, delta: data.text });

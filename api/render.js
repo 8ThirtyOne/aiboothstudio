@@ -35,6 +35,7 @@ const PROMPTS = {
     "large-format brand graphics with real-looking lifestyle or product photography and short, punchy benefit messaging that fits this brand; a premium reception counter with a backlit branded front panel; a large digital screen with branded content; a slightly raised platform floor with a glowing LED edge; refined modern furniture, live plants and tasteful accent lighting.",
     b.colors.length ? `Use the brand colors ${b.colors.join(", ")} as the dominant palette, balanced with clean white surfaces.` : "Use the blockout's colors as the brand palette, balanced with clean white surfaces.",
     "Make it an ultra photo-realistic, magazine-quality professional photograph from a three-quarter view close to the reference angle, in a real convention center with a high ceiling, truss lighting and neighboring exhibits softly out of focus, with realistic materials, reflections, shadows and depth of field.",
+    "The result must look dramatically more enhanced, premium and ambitious than the blockout: a bold design upgrade by a top exhibit house, never a faithful copy of the rough 3D model. Keep the brand name, colors, footprint and camera angle.",
     "Absolutely no 3D-render or CGI look, no mannequins or placeholder figures, no distorted or misspelled text.",
     dir ? `Photo style: ${dir}` : "",
   ].filter(Boolean).join(" "),

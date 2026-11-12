@@ -14,7 +14,7 @@
   const POLL_MS = { image: 4000, video: 10000 };
   // One-click art direction styles. Picking one fills the box, which stays editable.
   const STYLES = [
-    { id: 'flagship', name: 'Award-winning flagship', text: 'Award-winning flagship exhibit, dramatic LED lighting, bold oversized graphics, striking architectural forms, shot like a design-award photo.' },
+    { id: 'flagship', name: 'Award-winning flagship', text: 'Concept upgrade: reimagine this booth as a dramatically enhanced, award-winning flagship exhibit that goes far beyond the 3D model. Premium custom-built finishes, dramatic LED lighting, bold oversized brand graphics and striking architectural forms, shot like a design-award photo.' },
     { id: 'hero', name: 'Clean hero shot', text: 'Professional architectural photograph, wide-angle 24mm lens at eye level, bright even exhibition hall lighting, polished concrete aisle in the foreground, sharp focus, high detail.' },
     { id: 'minimal', name: 'Premium and minimal', text: 'Sophisticated premium exhibit, minimalist luxury finishes, soft backlit glow, generous open space, high-end corporate feel.' },
     { id: 'busy', name: 'Busy show day', text: 'Award-winning exhibit on the busiest show day, crowds engaging with staff and screens, energetic atmosphere, dramatic lighting.' },
@@ -79,18 +79,16 @@
       w.innerHTML = `<p class="gen-note">AI Render is included with every pass: photo-realistic images and 10-second videos of your booth. Your account doesn't have an active pass yet.</p><a class="btn btn-primary" href="/#pricing" style="text-align:center">See passes and pricing</a>`;
       return;
     }
-    w.innerHTML = `<div class="gen-top"><p style="margin:0;font-size:13px;color:var(--fg-muted);max-width:52ch;line-height:1.5">Frame the view you want in 3D, choose a style, then generate.</p>
+    w.innerHTML = `<div class="gen-top"><p style="margin:0;font-size:13px;color:var(--fg-muted);max-width:52ch;line-height:1.5"><b style="color:var(--fg)">AI Render photographs your finished design.</b> Frame the view you want in 3D, choose a style, then generate a photo-realistic image (1 image credit) or a 10-second video (1 video credit). To change the design itself, use <b style="color:var(--fg)">AI Build</b> or edit it by hand.</p>
         <div class="gen-credits"><div class="gen-chip"><b id="gen-img-left">${c.img} / ${c.imgTotal}</b><span>Images left</span></div><div class="gen-chip"><b id="gen-vid-left">${c.vid} / ${c.vidTotal}</b><span>Videos left</span></div></div></div>
       <div class="gen-mode" role="radiogroup" aria-label="Render style">
-        <div class="gen-mode-btn" data-mode="upgrade" role="radio" tabindex="0"><b>Concept Upgrade</b><span>AI designs a premium, built-out version of your booth, then photographs it</span></div>
+        <div class="gen-mode-btn" data-mode="upgrade" role="radio" tabindex="0"><b>Concept Upgrade</b><span>AI redesigns a much more enhanced, premium version of your booth, then photographs it. Expect a big step up from your 3D model.</span></div>
         <div class="gen-mode-btn" data-mode="faithful" role="radio" tabindex="0"><b>Faithful to My Design</b><span>Keeps your design exactly and makes it look real</span></div>
       </div>
       <div class="gen-styles" role="group" aria-label="Art direction styles">${STYLES.map(s => `<div class="gen-style" role="button" tabindex="0" data-style="${s.id}">${s.name}</div>`).join('')}</div>
       <textarea class="gen-dir" id="gen-dir" rows="3" aria-label="Art direction" placeholder="Art direction (optional), e.g. busy show hours, warm evening light"></textarea>
       <div class="gen-btns"><button class="btn btn-primary" id="gen-img">Generate image · 1 credit</button><button class="btn" id="gen-vid">Generate 10-sec video · 1 credit</button></div>
-      <div class="gen-buy" role="group" aria-label="Buy extra credits"><span class="gen-buy-lbl">Need more?</span>
-        <label class="gen-buy-qty">Qty <select id="gen-buy-qty">${[1, 2, 3, 5, 10].map(n => `<option value="${n}">${n}</option>`).join("")}</select></label>
-        <button class="btn btn-sm" data-buy="image">Buy images · $5 each</button><button class="btn btn-sm" data-buy="video">Buy 10-sec videos · $10 each</button></div>
+      <div class="gen-buy"><span class="gen-buy-lbl">Need more?<small>Images $5 · 10-sec videos $10 · 10 AI Build actions $5</small></span><button class="btn btn-sm" id="gen-buy-open">Buy extras</button></div>
       <div class="gen-status" id="gen-status" aria-live="polite">Images take about 30 seconds. 10-second videos animate your latest AI image and take 2–4 minutes; you can keep working meanwhile.</div>
       <div class="ss-title">Your Generations</div><div class="gen-grid" id="gen-grid"></div>`;
     const dirBox = document.getElementById('gen-dir'), styleBtns = [...w.querySelectorAll('.gen-style')];
@@ -104,7 +102,7 @@
     modeBtns.forEach(b => { b.onclick = () => setMode(b.dataset.mode); b.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMode(b.dataset.mode); } }; }); setMode(live.mode);
     document.getElementById('gen-img').onclick = () => start('image');
     document.getElementById('gen-vid').onclick = () => start('video');
-    w.querySelectorAll('[data-buy]').forEach(b => { b.onclick = () => buy(b.dataset.buy, Number(document.getElementById('gen-buy-qty').value), b); });
+    document.getElementById('gen-buy-open').onclick = () => openBuyExtras();
     draw(); if (!live.loaded) loadList();
   }
 
@@ -126,14 +124,41 @@
     btn.disabled = false; draw();
   }
 
-  // Extra credits: opens Stripe Checkout; the credits are added to the pass when payment completes.
-  async function buy(kind, qty, btn) {
-    const st = document.getElementById('gen-status'), label = btn.textContent;
-    btn.disabled = true; btn.textContent = 'Opening checkout…';
-    try { const { url } = await api('/api/checkout', { method: 'POST', body: JSON.stringify({ addon: kind, qty }) }); location.href = url; return; }
-    catch (e) { st.textContent = e?.message || "Couldn't open checkout. Try again."; }
-    btn.disabled = false; btn.textContent = label;
+  // Buy extras: one window for AI Build packs, AI Render images and 10-second videos. Opens Stripe Checkout;
+  // the extras are added to the pass when payment completes and last as long as the pass.
+  const EXTRAS = [
+    { kind: 'ai', name: 'AI Build actions', price: '$5 per pack of 10', unit: n => `${n * 10} actions`, what: 'Builds or changes your editable 3D booth: AI Build from words, photo to 3D, and prompt writing. One action per request.' },
+    { kind: 'image', name: 'AI Render images', price: '$5 each', unit: n => `${n} image${n === 1 ? '' : 's'}`, what: 'Turns your current 3D view into one photo-realistic image.' },
+    { kind: 'video', name: 'AI Render 10-sec videos', price: '$10 each', unit: n => `${n} video${n === 1 ? '' : 's'}`, what: 'Animates one of your AI images into a 10-second video clip.' },
+  ];
+  function openBuyExtras(focus) {
+    const body = openModal('Buy Extras', false);
+    const w = el('div', 'extras'); body.append(w);
+    if (!acct.signedIn || !credits()) {
+      w.innerHTML = `<p class="gen-note">Extras are added to an active pass. ${acct.signedIn ? 'Buy a pass first' : 'Sign in with the email you bought your pass with'}, then come back here.</p>`;
+      const b = el('a', 'btn btn-primary', acct.signedIn ? 'See passes and pricing' : 'Sign in'); if (acct.signedIn) b.href = '/#pricing'; else b.onclick = () => openAccount(); w.append(b); return;
+    }
+    const msg = el('div', 'gen-status'); msg.setAttribute('aria-live', 'polite');
+    if (focus === 'ai') msg.textContent = "You've used all the AI Build actions on your pass. Add a pack of 10 to keep building.", msg.classList.add('extra-alert'), w.append(msg);
+    EXTRAS.forEach(x => {
+      const row = el('div', 'extra-row' + (focus === x.kind ? ' on' : ''));
+      row.innerHTML = `<div class="extra-txt"><b>${x.name}</b><span>${x.what}</span><em>${x.price}</em></div>`;
+      const act = el('div', 'extra-act');
+      const sel = el('select'); sel.setAttribute('aria-label', `How many: ${x.name}`);
+      [1, 2, 3, 5, 10].forEach(n => { const o = el('option', null, x.kind === 'ai' ? `${n} pack${n === 1 ? '' : 's'} · ${n * 10}` : String(n)); o.value = n; sel.append(o); });
+      const b = el('button', 'btn btn-primary btn-sm', 'Buy');
+      b.onclick = async () => {
+        b.disabled = true; b.textContent = 'Opening checkout…';
+        try { const { url } = await api('/api/checkout', { method: 'POST', body: JSON.stringify({ addon: x.kind, qty: +sel.value }) }); location.href = url; return; }
+        catch (e) { msg.textContent = e?.message || "Couldn't open checkout. Try again."; }
+        b.disabled = false; b.textContent = 'Buy';
+      };
+      act.append(sel, b); row.append(act); w.append(row);
+    });
+    if (!msg.isConnected) w.append(msg);
+    w.append(el('p', 'extra-foot', 'Extras are added to your current pass and can be used until it ends.'));
   }
+  window.openBuyExtras = openBuyExtras;
 
   function draw() {
     const c = credits(), a = document.getElementById('gen-img-left');
@@ -167,13 +192,12 @@
 (function afterCreditPurchase() {
   const q = new URLSearchParams(location.search);
   if (q.get('credits') !== 'added' || !window.aibdAuth) return;
-  q.delete('credits'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash);
+  const kind = q.get('kind'); q.delete('credits'); q.delete('kind'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash);
   let shown = false;
   const show = () => {
     if (shown || !acct.signedIn) return; shown = true;
-    window.openGenerate();
-    const st = document.getElementById('gen-status');
-    if (st) st.textContent = 'Payment received. Your extra credits appear here in a few seconds.';
+    if (kind === 'ai') { openAccount(); const m = document.getElementById('acct-msg'); if (m) m.textContent = 'Payment received. Your extra AI Build actions appear here in a few seconds.'; }
+    else { window.openGenerate(); const st = document.getElementById('gen-status'); if (st) st.textContent = 'Payment received. Your extra credits appear here in a few seconds.'; }
     [3000, 8000, 15000].forEach(ms => setTimeout(() => window.aibdAuth.refresh(), ms));
   };
   window.aibdAuth.onChange(show); setTimeout(show, 1500);

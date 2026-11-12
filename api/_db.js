@@ -101,7 +101,7 @@ export async function storeResult(path, bytes, contentType) {
   return `${base}/storage/v1/object/public/renders/${path}`;
 }
 
-// Uses one AI design action on a pass. Returns true if one was available and used.
+// Uses one AI Build action on a pass. Returns true if one was available and used.
 export async function useAiAction(passId) {
   const ok = await rest("rpc/use_ai_action", { method: "POST", body: { p_pass: passId } });
   return ok === true;
@@ -119,6 +119,9 @@ export async function recordTopup({ stripeSession, passId, email, kind, qty, amo
 }
 export async function addMediaCredits(passId, kind, qty) {
   return (await rest("rpc/add_media_credits", { method: "POST", body: { p_pass: passId, p_kind: kind, p_qty: qty } })) === true;
+}
+export async function addAiActions(passId, qty) {
+  return (await rest("rpc/add_ai_actions", { method: "POST", body: { p_pass: passId, p_qty: qty } })) === true;
 }
 export async function passById(id) {
   const rows = await rest(`passes?select=*&id=eq.${encodeURIComponent(id)}&limit=1`);

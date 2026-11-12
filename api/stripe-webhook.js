@@ -6,7 +6,7 @@
 import crypto from "node:crypto";
 import { ADDONS, PLANS } from "./_plans.js";
 import { brandedEmail, esc, sendToCustomer, sendToOwner } from "./_email.js";
-import { addMediaCredits, dbConfigured, passById, recordPass, recordTopup } from "./_db.js";
+import { addAiActions, addMediaCredits, dbConfigured, passById, recordPass, recordTopup } from "./_db.js";
 
 const TOLERANCE_SECONDS = 300;
 
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
         ["Amount", esc(paid)],
         ["Customer", `<a href="mailto:${esc(email)}" style="color:#2563eb;text-decoration:none">${esc(email)}</a>`],
       ];
-      if (plan) rows.push(["Includes", esc(`${plan.days} days, ${plan.ai} AI design actions, ${plan.images} AI images, ${plan.videos} 10-second AI video${plan.videos === 1 ? "" : "s"}`)]);
+      if (plan) rows.push(["Includes", esc(`${plan.days} days, ${plan.ai} AI Build actions, ${plan.images} AI images, ${plan.videos} 10-second AI video${plan.videos === 1 ? "" : "s"}`)]);
       rows.push(["Mode", test ? "Test payment" : "Live payment"]);
       const html = brandedEmail({
         eyebrow: test ? "Payment received · test" : "Payment received",
@@ -91,7 +91,7 @@ export default async function handler(req, res) {
         const site = `https://${req.headers["x-forwarded-host"] || req.headers.host}`;
         const endsAt = newRow?.ends_at ? new Date(newRow.ends_at) : new Date(Date.now() + plan.days * 864e5);
         const until = endsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
-        const includes = `${plan.days} days of full access, ${plan.ai} AI design actions, ${plan.images} AI images, ${plan.videos} 10-second AI video${plan.videos === 1 ? "" : "s"}`;
+        const includes = `${plan.days} days of full access, ${plan.ai} AI Build actions, ${plan.images} AI images, ${plan.videos} 10-second AI video${plan.videos === 1 ? "" : "s"}`;
         const steps = recorded
           ? `1. Open the app and click <b>Sign in</b>.<br>2. Enter <b>${esc(email)}</b> and open the sign-in link we email you.<br>3. Your pass and credits appear under <b>Account</b>.`
           : "Your pass is being switched on and will be ready shortly. We'll be in touch if anything is needed.";
@@ -124,7 +124,7 @@ export default async function handler(req, res) {
   return res.status(200).json({ received: true });
 }
 
-// Extra AI Render credits: added to the pass they were bought for, once per Stripe session.
+// Extra credits (AI Render images and videos, or AI Build actions in packs of 10): added to the pass they were bought for, once per Stripe session.
 async function handleTopup(req, res, event, s) {
   const kind = s.metadata.addon, addon = ADDONS[kind];
   const qty = Math.floor(Number(s.metadata.qty));
@@ -135,19 +135,21 @@ async function handleTopup(req, res, event, s) {
   console.log("topup", JSON.stringify({ mode: test ? "TEST" : "LIVE", kind, qty, email, paid, session: s.id, status: s.payment_status }));
   if (s.payment_status !== "paid" || !addon || !(qty > 0) || !passId || !dbConfigured()) return res.status(200).json({ received: true });
 
+  const units = kind === "ai" ? qty * (addon.per || 10) : qty; // AI Build actions are sold in packs
+  const noun = kind === "ai" ? "AI Build action" : kind === "video" ? "10-second AI video" : "AI image";
   let added = false, row = null, pass = null;
   try {
-    row = await recordTopup({ stripeSession: s.id, passId, email: email === "unknown" ? "" : email, kind, qty, amountCents: s.amount_total ?? null, livemode: !!event.livemode });
+    row = await recordTopup({ stripeSession: s.id, passId, email: email === "unknown" ? "" : email, kind, qty: units, amountCents: s.amount_total ?? null, livemode: !!event.livemode });
     if (!row) return res.status(200).json({ received: true, duplicate: true }); // already handled
-    added = await addMediaCredits(passId, kind, qty);
+    added = kind === "ai" ? await addAiActions(passId, units) : await addMediaCredits(passId, kind, qty);
     pass = await passById(passId).catch(() => null);
   } catch (err) {
     console.error("topup failed", err?.message);
     if (!row) return res.status(500).json({ error: "record_failed" }); // Stripe retries later
   }
 
-  const what = `${qty} extra AI ${kind}${qty === 1 ? "" : "s"}`;
-  const left = pass ? (kind === "image" ? pass.images_total - pass.images_used : pass.videos_total - pass.videos_used) : null;
+  const what = `${units} extra ${noun}${units === 1 ? "" : "s"}`;
+  const left = pass ? (kind === "ai" ? pass.ai_total - pass.ai_used : kind === "image" ? pass.images_total - pass.images_used : pass.videos_total - pass.videos_used) : null;
   const pi = typeof s.payment_intent === "string" ? s.payment_intent : s.payment_intent?.id;
   const dashboard = `https://dashboard.stripe.com/${test ? "test/" : ""}${pi ? `payments/${pi}` : "payments"}`;
   const html = brandedEmail({
@@ -164,17 +166,17 @@ async function handleTopup(req, res, event, s) {
     const site = `https://${req.headers["x-forwarded-host"] || req.headers.host}`;
     const until = pass ? new Date(pass.ends_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }) : "";
     const rows = [["Added", esc(what)], ["Amount paid", esc(paid)]];
-    if (left != null) rows.push([kind === "image" ? "Images now left" : "Videos now left", String(left)]);
+    if (left != null) rows.push([kind === "ai" ? "AI Build actions now left" : kind === "image" ? "Images now left" : "Videos now left", String(left)]);
     if (until) rows.push(["Use them by", esc(until)]);
     await sendToCustomer({
       to: email,
-      subject: `${test ? "[Test] " : ""}Your extra AI ${kind}s are ready`,
-      text: `${what} ${qty === 1 ? "was" : "were"} added to your AI Booth Studio pass${until ? `. Use ${qty === 1 ? "it" : "them"} by ${until}` : ""}.\nOpen ${site}/app/ and click AI Render.`,
+      subject: `${test ? "[Test] " : ""}Your ${what} ${units === 1 ? "is" : "are"} ready`,
+      text: `${what} ${units === 1 ? "was" : "were"} added to your AI Booth Studio pass${until ? `. Use ${units === 1 ? "it" : "them"} by ${until}` : ""}.\nOpen ${site}/app/ and click ${kind === "ai" ? "AI Build" : "AI Render"}.`,
       html: brandedEmail({
         eyebrow: test ? "Payment confirmed · test" : "Payment confirmed",
-        title: `Your extra AI ${kind}${qty === 1 ? " is" : "s are"} ready`,
+        title: `Your ${what} ${units === 1 ? "is" : "are"} ready`,
         rows,
-        panelHtml: added ? "Already on your pass. Open the app and click <b>AI Render</b> to use them." : "They're being added to your pass and will be ready shortly.",
+        panelHtml: added ? `Already on your pass. Open the app and click <b>${kind === "ai" ? "AI Build" : "AI Render"}</b> to use them.` : "They're being added to your pass and will be ready shortly.",
         button: { href: `${site}/app/`, label: "Open AI Booth Studio" },
         footer: "Your card receipt comes separately from Stripe. Questions? Just reply to this email.",
       }),

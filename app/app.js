@@ -3263,7 +3263,10 @@ function openTemplates() {
   const body = openModal('AI Build', true);
   const ai = document.createElement('div'); ai.className = 'ai-box';
   ai.innerHTML = `<label for="ai-text">Describe a booth and Claude builds it</label><textarea id="ai-text" rows="3" placeholder="e.g. A 20×30 corner booth for a coffee brand, warm wood, a bar with stools, two screens and lots of plants"></textarea><div class="ai-refs"><div class="ai-refs-head"><span>Reference images (optional, up to 4)</span><button class="btn btn-sm" type="button" id="ai-ref-add">Add images</button><input type="file" id="ai-ref-input" hidden multiple accept="image/png,image/jpeg,image/webp,image/gif"></div><div id="ai-ref-list" class="ai-ref-list"></div><div class="ai-drop-hint">Drag and drop images here</div></div><div class="ai-row"><button class="btn btn-sm btn-primary" id="ai-run">Build it</button><button class="btn btn-sm" id="ai-stop" hidden>Stop</button><span id="ai-msg" aria-live="polite"></span></div>`;
-  body.append(ai);
+  const left = acct.row ? Math.max(0, acct.row.ai_total - acct.row.ai_used) : null;
+  const intro = document.createElement('p'); intro.className = 'gen-note kind-note';
+  intro.innerHTML = `<b>AI Build creates and changes your editable 3D booth.</b> Each request uses 1 AI Build action${left != null ? ` (${left} left)` : ''}. To turn the finished design into a photo-realistic image or video, use <b>AI Render</b>.`;
+  body.append(intro, ai);
   document.getElementById('ai-run').onclick = aiBuild;
   document.getElementById('ai-ref-add').onclick = () => document.getElementById('ai-ref-input').click();
   document.getElementById('ai-ref-input').onchange = onAiRefFiles;
@@ -3394,11 +3397,11 @@ function openAccountLive() {
       <div class="acct-row"><span>Pass</span><b>${p ? p.name + (r.livemode ? '' : ' (test)') : 'No active pass'}</b></div>
       ${r ? `<div class="acct-row"><span>Active until</span><b>${fmtDate(r.ends_at)}</b></div>` : ''}
     </div>
-    ${r ? `<div class="gen-credits">${r.ai_total ? `<div class="gen-chip"><b>${r.ai_total - r.ai_used} / ${r.ai_total}</b><span>AI actions left</span></div>` : ''}<div class="gen-chip"><b>${r.images_total - r.images_used} / ${r.images_total}</b><span>Images left</span></div><div class="gen-chip"><b>${r.videos_total - r.videos_used} / ${r.videos_total}</b><span>Videos left</span></div></div><button class="btn btn-primary" id="acct-more">Buy extra images or videos</button>` : '<p style="font-size:13px;color:var(--fg-muted);line-height:1.5">Buy a pass with this email to unlock AI features and image and video credits. It shows up here a few seconds after checkout.</p>'}
+    ${r ? `<div class="gen-credits">${r.ai_total ? `<div class="gen-chip"><b>${r.ai_total - r.ai_used} / ${r.ai_total}</b><span>AI Build actions left</span></div>` : ''}<div class="gen-chip"><b>${r.images_total - r.images_used} / ${r.images_total}</b><span>Images left</span></div><div class="gen-chip"><b>${r.videos_total - r.videos_used} / ${r.videos_total}</b><span>Videos left</span></div></div><button class="btn btn-primary" id="acct-more">Buy extras: AI Build actions, images, videos</button>` : '<p style="font-size:13px;color:var(--fg-muted);line-height:1.5">Buy a pass with this email to unlock AI features and image and video credits. It shows up here a few seconds after checkout.</p>'}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${r ? '<button class="btn" id="acct-refresh">Refresh</button>' : '<a class="btn btn-primary" href="/#pricing" style="text-align:center">See passes</a>'}<button class="btn" id="acct-out">Sign out</button></div>
     <div class="acct-msg" id="acct-msg" aria-live="polite"></div>`;
   document.getElementById('acct-who').textContent = acct.email;
-  const more = document.getElementById('acct-more'); if (more) more.onclick = () => window.openGenerate();
+  const more = document.getElementById('acct-more'); if (more) more.onclick = () => (window.openBuyExtras || window.openGenerate)();
   const rf = document.getElementById('acct-refresh'); if (rf) rf.onclick = async () => { rf.disabled = true; await window.aibdAuth.refresh(); };
   document.getElementById('acct-out').onclick = async () => { await window.aibdAuth.signOut(); closeModal(); };
 }
@@ -3605,7 +3608,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v77'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v78'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);

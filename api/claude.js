@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     if (!user) return res.status(401).json({ code: "sign_in_required", message: "Sign in to use AI features." });
     pass = await activePass(user.email).catch(() => null);
     if (!pass) return res.status(402).json({ code: "pass_required", message: "AI features need an active pass. See passes and pricing on the website." });
-    if (pass.ai_used >= pass.ai_total) return res.status(429).json({ code: "ai_limit", message: `You've used all ${pass.ai_total} AI design actions on your pass.` });
+    if (pass.ai_used >= pass.ai_total) return res.status(429).json({ code: "ai_limit", message: `You've used all ${pass.ai_total} AI Build actions on your pass. Add 10 more for $5 under Buy extras.` });
   }
 
   const { input, images = [], tier = "default" } = req.body || {};
