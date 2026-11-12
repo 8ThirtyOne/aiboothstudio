@@ -565,3 +565,6 @@ details.sec > .ss > .ss-label { display: none; }
 .gen-style:hover { border-color: var(--accent); }
 .gen-style.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .gen-style:focus-visible, .gen-mode-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+a.logo { color: inherit; text-decoration: none; }
+a.logo:hover { opacity: .8; }

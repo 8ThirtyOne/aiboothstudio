@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AI Booth Studio</title>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-<script src="/js/claude-shim.js?v=62"></script>
+<script src="/js/claude-shim.js?v=63"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"></script>
-<script src="/js/config.js?v=62"></script>
-<script src="/js/accounts.js?v=62"></script>
+<script src="/js/config.js?v=63"></script>
+<script src="/js/accounts.js?v=63"></script>
 </head>
 <body>
 
@@ -17,14 +17,14 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Momo+Trust+Display&display=swap">
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
 
-<link rel="stylesheet" href="/app/app.css?v=62">
+<link rel="stylesheet" href="/app/app.css?v=63">
 
 <!-- HEADER -->
 <header>
-  <div class="logo">
+  <a class="logo" href="/" title="Back to the AI Booth Studio home page">
     <div class="logo-mark" aria-hidden="true"><svg viewBox="13 16 156 150"><path d="M128.6 61 81.6 45.8V23.5l73.5 27z"/><path d="M71.9,141.9V23.5L25.8,58.3l-9.5,104,1.5-.5c15.2-9.9,33.5-16.8,53.6-19.6l.6-.2Z"/><path d="M160,56.6l-34.9,12.9v73.8c15.6,3,30,8.5,42.5,15.9l-7.6-102.6Z"/></svg></div>
     AI Booth Studio
-  </div>
+  </a>
   <div class="htabs">
     <button class="htab active" onclick="switchTab('design')">Structure</button>
     <button class="htab" onclick="switchTab('furnish')">Furnishings</button>
@@ -427,7 +427,7 @@
   <div id="modal-card"><div class="modal-head"><h2 id="modal-title"></h2><button class="btn btn-sm" onclick="closeModal()" aria-label="Close">✕</button></div><div id="modal-body"></div></div>
 </div>
 
-<script type="module" src="/app/three-loader.js?v=62"></script>
+<script type="module" src="/app/three-loader.js?v=63"></script>
 
 
 </body>
