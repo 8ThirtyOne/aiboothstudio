@@ -3256,7 +3256,7 @@ function openTemplates() {
 }
 
 // Generate: photo-realistic image and video (preview until passes and the generation service are connected)
-const GEN_PASSES = { week: { name: '1 Week Pass', img: 4, vid: 2 }, month: { name: '1 Month Pass', img: 6, vid: 4 }, year: { name: '1 Year Pass', img: 30, vid: 10 } };
+const GEN_PASSES = { week: { name: '1 Week Pass', img: 4, vid: 2 }, month: { name: '1 Month Pass', img: 8, vid: 4 }, year: { name: '1 Year Pass', img: 30, vid: 10 } };
 const genState = { pass: 'week', used: { img: 0, vid: 0 }, items: [] };
 function openGenerate() {
   const body = openModal('AI Render', true);
@@ -3580,7 +3580,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v75'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v76'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);
