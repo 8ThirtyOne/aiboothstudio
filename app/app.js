@@ -2022,6 +2022,29 @@ function addHallDetail(addE) {
 // High-resolution export
 let exporting = false;
 function setExportMsg(t) { document.getElementById('export-msg').textContent = t; }
+// Free exports carry a small "Made with AI Booth Studio" mark; anyone with an active pass gets clean images.
+function hasActivePass() { return !!(acct.live && acct.signedIn && acct.row && new Date(acct.row.ends_at) > new Date()); }
+const LOGO_PATHS = ['M128.6 61 81.6 45.8V23.5l73.5 27z', 'M71.9,141.9V23.5L25.8,58.3l-9.5,104,1.5-.5c15.2-9.9,33.5-16.8,53.6-19.6l.6-.2Z', 'M160,56.6l-34.9,12.9v73.8c15.6,3,30,8.5,42.5,15.9l-7.6-102.6Z'];
+async function watermarked(src, W, H) {
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'); g.drawImage(src, 0, 0, W, H);
+  try { await document.fonts.load('700 20px "Bricolage Grotesque"'); } catch {}
+  const u = Math.max(W, H) / 100;                        // 1% of the long side
+  const fs = Math.round(u * 1.25), pad = Math.round(u * .8), logo = Math.round(fs * 1.5), gap = Math.round(u * .6);
+  const main = 'Made with AI Booth Studio', site = 'aiboothstudio.com';
+  g.font = `700 ${fs}px "Bricolage Grotesque", system-ui, sans-serif`; const mw = g.measureText(main).width;
+  g.font = `500 ${fs}px "Bricolage Grotesque", system-ui, sans-serif`; const sw = g.measureText(site).width;
+  const sep = Math.round(fs * .9), bw = pad * 2 + logo + gap + mw + sep + sw, bh = pad * 2 + logo, m = Math.round(u * 1.6);
+  const x = W - m - bw, y = H - m - bh;
+  g.fillStyle = 'rgba(10, 14, 22, .62)'; g.beginPath(); g.roundRect(x, y, bw, bh, bh / 2); g.fill();
+  g.save(); g.translate(x + pad, y + pad); g.scale(logo / 156, logo / 150); g.translate(-13, -16);
+  g.fillStyle = '#669dff'; LOGO_PATHS.forEach(p => g.fill(new Path2D(p))); g.restore();
+  g.textBaseline = 'middle'; const ty = y + bh / 2 + fs * .04;
+  g.font = `700 ${fs}px "Bricolage Grotesque", system-ui, sans-serif`; g.fillStyle = '#ffffff'; g.fillText(main, x + pad + logo + gap, ty);
+  g.fillStyle = 'rgba(255,255,255,.45)'; g.fillText('·', x + pad + logo + gap + mw + sep * .35, ty);
+  g.font = `500 ${fs}px "Bricolage Grotesque", system-ui, sans-serif`; g.fillStyle = 'rgba(255,255,255,.8)'; g.fillText(site, x + pad + logo + gap + mw + sep, ty);
+  return new Promise(r => c.toBlob(r, 'image/png'));
+}
 async function exportRender() {
   if (exporting) return;
   const downloads = window.claude ? await window.claude.use('downloads') : null;
@@ -2041,8 +2064,9 @@ async function exportRender() {
       setExportMsg(`Rendering ${hqN}/${samples}…`);
       await new Promise(r => setTimeout(r));
     }
-    const blob = await new Promise(r => hqCanvas.toBlob(r, 'image/png'));
-    lastRenderBlob = blob;
+    const clean = await new Promise(r => hqCanvas.toBlob(r, 'image/png'));
+    lastRenderBlob = clean;
+    const blob = hasActivePass() ? clean : await watermarked(hqCanvas, W, H);
     setExportMsg('Waiting for you to confirm the save…');
     await downloads.save({ filename: `booth-render-${W}x${H}.png`, data: blob });
     setExportMsg(`Saved ${W} × ${H} PNG.`);
@@ -3310,6 +3334,7 @@ if (window.aibdAuth) window.aibdAuth.onChange(st => {
   acct.signedIn = !!st.user; acct.email = st.user?.email || ''; acct.name = acct.email; acct.row = st.pass;
   if (st.pass) { acct.pass = st.pass.plan; genState.pass = st.pass.plan; genState.used = { img: st.pass.images_used, vid: st.pass.videos_used }; }
   drawAcctBtn();
+  const wm = document.getElementById('export-wm-note'); if (wm) wm.hidden = hasActivePass();
   const t = document.getElementById('modal-title')?.textContent || '';
   if (!document.getElementById('modal').hidden && /^(Sign In|Your Account)$/i.test(t)) openAccount();
 });
@@ -3580,7 +3605,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v76'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v77'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);

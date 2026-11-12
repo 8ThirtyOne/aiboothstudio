@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AI Booth Studio</title>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-<script src="/js/claude-shim.js?v=76"></script>
+<script src="/js/claude-shim.js?v=77"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"></script>
-<script src="/js/config.js?v=76"></script>
-<script src="/js/accounts.js?v=76"></script>
+<script src="/js/config.js?v=77"></script>
+<script src="/js/accounts.js?v=77"></script>
 </head>
 <body>
 
@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&display=swap">
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
 
-<link rel="stylesheet" href="/app/app.css?v=76">
+<link rel="stylesheet" href="/app/app.css?v=77">
 
 <!-- HEADER -->
 <header>
@@ -59,6 +59,7 @@
         </div>
         <button class="btn btn-sm btn-primary" id="export-btn" style="width:100%" onclick="exportRender()">Save image</button>
         <div id="export-msg" aria-live="polite" style="font-size:11px;color:var(--fg-muted);margin-top:5px"></div>
+        <div id="export-wm-note" style="font-size:11px;line-height:1.4;color:var(--fg-muted);margin-top:4px">Free exports include a small &ldquo;Made with AI Booth Studio&rdquo; mark. <a href="/#pricing" style="color:var(--accent)">Any pass</a> removes it.</div>
       </div>
       <div class="ss">
         <div class="ss-label">3D Model</div>
@@ -427,7 +428,7 @@
   <div id="modal-card"><div class="modal-head"><h2 id="modal-title"></h2><button class="btn btn-sm" onclick="closeModal()" aria-label="Close">✕</button></div><div id="modal-body"></div></div>
 </div>
 
-<script type="module" src="/app/three-loader.js?v=76"></script>
+<script type="module" src="/app/three-loader.js?v=77"></script>
 
 
 <!-- Small-screen notice: the app is built for a large desktop screen -->
