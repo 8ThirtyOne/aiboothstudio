@@ -96,7 +96,7 @@ export default async function handler(req, res) {
       const prompt = kind === "video" ? PROMPTS.video(dir, fromPhoto) : PROMPTS[mode](dir, b);
       const imageUrl = fromPhoto ? sourceUrl : `data:image/jpeg;base64,${image}`;
       const input = kind === "video"
-        ? { prompt, image_url: imageUrl, duration: "5" }
+        ? { prompt, image_url: imageUrl, duration: "10" }
         : MODELS.image.includes("nano-banana")
           ? { prompt, image_urls: [imageUrl], num_images: 1, output_format: "jpeg", ...(MODELS.image.includes("pro") ? { resolution: IMAGE_RESOLUTION } : { limit_generations: true }) }
           : { prompt, image_url: imageUrl, output_format: "jpeg", guidance_scale: 5 };

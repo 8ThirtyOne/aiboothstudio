@@ -91,7 +91,7 @@
       <div class="gen-buy" role="group" aria-label="Buy extra credits"><span class="gen-buy-lbl">Need more?</span>
         <label class="gen-buy-qty">Qty <select id="gen-buy-qty">${[1, 2, 3, 5, 10].map(n => `<option value="${n}">${n}</option>`).join("")}</select></label>
         <button class="btn btn-sm" data-buy="image">Buy images · $7 each</button><button class="btn btn-sm" data-buy="video">Buy videos · $15 each</button></div>
-      <div class="gen-status" id="gen-status" aria-live="polite">Images take about 30 seconds. Videos animate your latest AI image and take 1–3 minutes; you can keep working meanwhile.</div>
+      <div class="gen-status" id="gen-status" aria-live="polite">Images take about 30 seconds. Videos animate your latest AI image and take 2–4 minutes; you can keep working meanwhile.</div>
       <div class="ss-title">Your Generations</div><div class="gen-grid" id="gen-grid"></div>`;
     const dirBox = document.getElementById('gen-dir'), styleBtns = [...w.querySelectorAll('.gen-style')];
     const markStyle = () => styleBtns.forEach(b => b.classList.toggle('on', STYLES.find(s => s.id === b.dataset.style)?.text === dirBox.value.trim()));
@@ -121,7 +121,7 @@
       const { id } = await api('/api/render', { method: 'POST', body: JSON.stringify({ kind, mode: live.mode, image, sourceUrl: src || undefined, direction, brand: brandInfo() }) });
       upsert({ id, kind, status: 'queued', created_at: new Date().toISOString() });
       poll(id, kind); auth.refresh();
-      st.textContent = kind === 'image' ? 'Creating your image. It appears below in about 30 seconds.' : 'Creating your video. It appears below in 1–3 minutes; you can close this window and keep working.';
+      st.textContent = kind === 'image' ? 'Creating your image. It appears below in about 30 seconds.' : 'Creating your video. It appears below in 2–4 minutes; you can close this window and keep working.';
     } catch (e) { st.textContent = e?.message || "AI Render couldn't start. Try again."; }
     btn.disabled = false; draw();
   }
@@ -150,7 +150,7 @@
         const open = el('a', 'gen-open', it.kind === 'video' ? 'Open video' : 'Open full size'); open.href = it.result_url; open.target = '_blank'; open.rel = 'noopener'; d.append(open);
         if (it.kind === 'image') { const an = el('button', 'gen-animate', 'Animate · 1 video'); an.onclick = () => start('video', it.result_url); d.append(an); }
       } else {
-        const msg = it.status === 'failed' ? `Couldn't create this ${it.kind}. Your credit was returned.` : it.kind === 'video' ? 'Creating video… 1–3 minutes' : 'Creating image… about 30 seconds';
+        const msg = it.status === 'failed' ? `Couldn't create this ${it.kind}. Your credit was returned.` : it.kind === 'video' ? 'Creating video… 2–4 minutes' : 'Creating image… about 30 seconds';
         const t = el('div', 'gen-wait' + (it.status === 'failed' ? ' failed' : ''), msg); d.append(t);
       }
       grid.append(d);
