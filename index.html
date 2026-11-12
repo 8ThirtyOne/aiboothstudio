@@ -156,7 +156,11 @@ section { padding-block: clamp(64px, 9vw, 112px); }
 .step .tool { font: 400 12px var(--font-mono); color: var(--accent); }
 .strip-flow li + li::before { content: "→"; margin-right: 24px; color: var(--muted); font-weight: 400; }
 .strip-flow ul { gap: 10px 24px; }
-.strip-flow li { font-family: "Momo Trust Display", var(--font-display); font-weight: 400; font-size: 16px; }
+.strip-flow li { font-family: "Momo Trust Display", var(--font-display); font-weight: 400; font-size: 16px; display: flex; align-items: center; }
+.strip-flow li a { display: inline-flex; align-items: center; gap: 9px; color: inherit; text-decoration: none; transition: color .15s; }
+.strip-flow li a b { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font: 700 12px var(--font-body); flex: none; transition: transform .15s; }
+.strip-flow li a:hover { color: var(--accent); }
+.strip-flow li a:hover b { transform: scale(1.12); }
 .step p { color: var(--muted); font-size: 15px; }
 
 /* Booth types */
@@ -408,7 +412,7 @@ a.step:hover h3 { color: var(--accent); }
     <div class="wrap">
       <span class="strip-label">One workflow</span>
       <ul>
-        <li>Idea</li><li>3D layout</li><li>Brand</li><li>Render</li><li>Photo-realistic image &amp; video</li>
+        <li><a href="#step-1"><b>1</b>Idea</a></li><li><a href="#step-2"><b>2</b>3D layout</a></li><li><a href="#step-3"><b>3</b>Brand</a></li><li><a href="#step-4"><b>4</b>Render</a></li><li><a href="#step-5"><b>5</b>Photo-realistic image &amp; video</a></li>
       </ul>
     </div>
   </div>
