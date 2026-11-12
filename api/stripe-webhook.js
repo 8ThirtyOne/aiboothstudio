@@ -191,19 +191,26 @@ async function handleTopup(req, res, event, s) {
 // A partial refund changes nothing automatically; you get an email to decide.
 async function handleRefund(res, event) {
   const ch = event.data?.object || {};
-  const pi = typeof ch.payment_intent === "string" ? ch.payment_intent : ch.payment_intent?.id;
-  const full = !!ch.refunded, test = !event.livemode;
+  const key = process.env.STRIPE_SECRET_KEY;
+  const stripe = path => fetch(`https://api.stripe.com/v1/${path}`, { headers: { Authorization: `Bearer ${key}` } }).then(r => r.json());
+  const idOf = v => (typeof v === "string" ? v : v?.id) || null;
+  // Newer Stripe API versions can leave the payment intent off the refunded charge; fetch the charge itself if needed.
+  let pi = idOf(ch.payment_intent);
+  if (!pi && ch.id && key) { try { pi = idOf((await stripe(`charges/${encodeURIComponent(ch.id)}`))?.payment_intent); } catch {} }
+  const full = ch.refunded === true || (ch.amount > 0 && ch.amount_refunded >= ch.amount), test = !event.livemode;
   const money = c => `$${(c / 100).toFixed(2)}`;
-  console.log("refund", JSON.stringify({ mode: test ? "TEST" : "LIVE", pi, full, refunded: ch.amount_refunded, of: ch.amount }));
-  if (!pi || !dbConfigured() || !process.env.STRIPE_SECRET_KEY) return res.status(200).json({ received: true });
+  console.log("refund", JSON.stringify({ mode: test ? "TEST" : "LIVE", charge: ch.id, pi, full, refunded: ch.amount_refunded, of: ch.amount, keys: Object.keys(ch).slice(0, 60) }));
+  if (!key || !dbConfigured()) return res.status(200).json({ received: true, skipped: "not_configured" });
+  if (!pi) return res.status(200).json({ received: true, skipped: "no_payment_intent", charge: ch.id || null });
 
   // Which purchase was this? Find its checkout session, then the pass or extras recorded for it.
   let session = null;
   try {
-    const r = await fetch(`https://api.stripe.com/v1/checkout/sessions?payment_intent=${encodeURIComponent(pi)}&limit=1`, { headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` } });
-    session = (await r.json())?.data?.[0] || null;
+    const list = await stripe(`checkout/sessions?payment_intent=${encodeURIComponent(pi)}&limit=1`);
+    if (list?.error) console.error("refund session lookup error", list.error.message);
+    session = list?.data?.[0] || null;
   } catch (err) { console.error("refund lookup failed", err?.message); return res.status(500).json({ error: "lookup_failed" }); }
-  if (!session) return res.status(200).json({ received: true, unknown: true });
+  if (!session) return res.status(200).json({ received: true, skipped: "no_checkout_session", payment_intent: pi });
 
   let what = "", outcome = "";
   try {
@@ -219,7 +226,7 @@ async function handleRefund(res, event) {
       if (!full) outcome = "Partial refund: the extras are still on the pass.";
       else outcome = (await takeBackTopup(topup)) ? "The extras were taken back from the pass (any already used stay used)." : "This refund was already handled.";
     } else {
-      return res.status(200).json({ received: true, unknown: true });
+      return res.status(200).json({ received: true, skipped: "no_matching_purchase", session: session.id });
     }
   } catch (err) {
     console.error("refund failed", err?.message);
@@ -240,5 +247,5 @@ async function handleRefund(res, event) {
       footer: `Stripe session ${session.id}`,
     }),
   });
-  return res.status(200).json({ received: true });
+  return res.status(200).json({ received: true, refund: full ? "full" : "partial", outcome });
 }
