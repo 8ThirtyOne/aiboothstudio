@@ -97,6 +97,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .hero .eyebrow { color: #669dff; }
 .hero h1 { line-height: 1; font-size: clamp(32px, 5.6vw, 73px); font-weight: 400; margin-top: 14px; max-width: 13ch; }
 .hero h1 em { font-style: normal; color: #669dff; }
+.hero h1 strong { font-weight: inherit; color: #fff; }
 .hero .lede { margin-top: 18px; max-width: 52ch; font-family: "Bricolage Grotesque", var(--font-body); font-weight: 500; font-size: 18px; line-height: 1.5; color: rgba(244,247,251,.82); }
 .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
 .hero-tag { position: absolute; z-index: 2; right: max(20px, env(safe-area-inset-right, 0px)); bottom: 20px; font: 400 11px var(--font-mono); color: rgba(244,247,251,.8); background: rgba(8,11,17,.6); border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 6px 12px; }
@@ -297,7 +298,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     <div class="hero-copy">
       <div class="wrap">
         <div class="eyebrow">AI trade show booth design · start to finish</div>
-        <h1 id="hero-title">Showcase your booth vision <em>with ease</em></h1>
+        <h1 id="hero-title">Showcase your <em>booth vision</em> <strong>with ease</strong></h1>
         <p class="lede">The only AI tool that takes your trade show booth from a blank floor to an ultra-realistic image or video clip. Describe your idea, shape it in 3D, add your brand, then see the finished booth before anything is built.</p>
         <div class="hero-ctas">
           <a class="btn btn-primary" href="/app/">Start Designing</a>
