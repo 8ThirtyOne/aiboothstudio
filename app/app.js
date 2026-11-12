@@ -2516,7 +2516,7 @@ function drawOverlay() {
       const x = Math.max(8, Math.min(W - wPx - 8, p[0] - wPx / 2)), y = Math.max(8, p[1] - hPx - 10);
       dimSvg.append(svgEl("rect", { x, y, width: wPx, height: hPx, rx: 15, fill: "#2563eb" }));
       dimSvg.append(svgEl("path", { d: `M${p[0] - 6} ${y + hPx} L${p[0]} ${y + hPx + 7} L${p[0] + 6} ${y + hPx} Z`, fill: "#2563eb" }));
-      const t = svgEl("text", { x: x + wPx / 2, y: y + hPx / 2 + 1, fill: "#ffffff", "font-size": fs, "font-weight": 700, "font-family": "DM Sans, system-ui, sans-serif", "text-anchor": "middle", "dominant-baseline": "middle" });
+      const t = svgEl("text", { x: x + wPx / 2, y: y + hPx / 2 + 1, fill: "#ffffff", "font-size": fs, "font-weight": 700, "font-family": "Bricolage Grotesque, system-ui, sans-serif", "text-anchor": "middle", "dominant-baseline": "middle" });
       t.textContent = name; dimSvg.append(t);
     }
   }
@@ -3532,7 +3532,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v68'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v69'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);
