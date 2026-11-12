@@ -3420,7 +3420,7 @@ function openAccountPreview() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" id="acct-topup">Buy more credits</button><button class="btn" id="acct-out">Sign out</button></div>
     <div class="acct-msg" id="acct-msg" aria-live="polite"></div>`;
   document.getElementById('acct-pass').onchange = e => { acct.pass = e.target.value; genState.pass = acct.pass; genState.used = { img: 0, vid: 0 }; openAccount(); };
-  document.getElementById('acct-topup').onclick = () => { document.getElementById('acct-msg').textContent = 'Extra credits: $7 per image, $15 per video, bought from the AI Render window.'; };
+  document.getElementById('acct-topup').onclick = () => { document.getElementById('acct-msg').textContent = 'Extra credits: $7 per image, $10 per video, bought from the AI Render window.'; };
   document.getElementById('acct-out').onclick = () => { acct.signedIn = false; acct.name = ''; drawAcctBtn(); closeModal(); };
 }
 
@@ -3580,7 +3580,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v73'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v74'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);
