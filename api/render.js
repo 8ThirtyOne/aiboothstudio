@@ -49,7 +49,7 @@ const PROMPTS = {
     fromPhoto
       ? "Bring this photograph to life as real camera footage: a smooth, slow cinematic camera move toward the trade show booth at a busy convention center."
       : "Real camera footage, not a 3D animation: a smooth, slow cinematic camera move toward this trade show booth at a busy, real convention center.",
-    "Real people in business attire walk past and talk with staff at the booth; LED lighting and screens glow naturally.",
+    "Real people in business attire stroll past at a relaxed, natural walking pace, in real time and not sped up or time-lapsed; a few stop to talk with staff at the booth. Movement is calm and lifelike, with no rushing or jerky motion. LED lighting and screens glow naturally.",
     "Keep the booth's design, structures, colors, logos and wording exactly as they are.",
     dir ? `Style: ${dir}` : "",
   ].filter(Boolean).join(" "),
