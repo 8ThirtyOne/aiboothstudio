@@ -3532,7 +3532,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v69'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v70'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);
@@ -3870,10 +3870,12 @@ function loadStartupScene() {
   const cnt = document.querySelector('[oninput="onCrowdCount(this.value)"]'); if (cnt) cnt.value = 28;
   document.getElementById('crowd-count-v').textContent = '28';
   const tpl = linkedTemplate();
-  const link = tpl ? null : linkedSize();
+  const typeLink = tpl ? null : linkedType();
+  const link = tpl ? null : (typeLink ? { key: typeLink.key, units: 'ft' } : linkedSize());
   if (link) S.units = link.units;
   applyDesign(tpl ? JSON.parse(JSON.stringify(tpl.d)) : starterDesign(link ? link.key : '20x20'));
   if (typeof renderSizeGrid === 'function') renderSizeGrid();
+  if (typeLink) setBoothType(typeLink.type, document.querySelector(`[data-g=type][onclick*="'${typeLink.type}'"]`));
   heroCamera();
   if (link?.custom) {
     const z = getSZ(); S.custom = { w: z.w / FT, d: z.d / FT }; renderSizeGrid();
@@ -3892,13 +3894,19 @@ function linkedSize() {
   const key = m[1] ? 'm:' + m[2] : m[2];
   return (m[1] ? M_SIZES : FT_SIZES).includes(key) ? { key, units } : null;
 }
+// Booth type links from the website, e.g. #type-corner: that type at its usual starting size
+const TYPE_SIZES = { inline: '10x10', corner: '10x20', peninsula: '20x20', island: '20x20' };
+function linkedType() {
+  const m = /^#type-([a-z]+)$/.exec(location.hash || ''); if (!m || !(m[1] in TYPE_SIZES)) return null;
+  return { type: m[1], key: TYPE_SIZES[m[1]] };
+}
 // Design links from the website, e.g. #design-flagship
 const TEMPLATE_SLUGS = { starter: 0, demo: 1, lounge: 2, island: 3, flagship: 4, canopy: 5 };
 function linkedTemplate() {
   const m = /^#design-([a-z]+)$/.exec(location.hash || ''); if (!m || !(m[1] in TEMPLATE_SLUGS)) return null;
   return TEMPLATES[TEMPLATE_SLUGS[m[1]]] || null;
 }
-window.addEventListener('hashchange', () => { if (linkedSize() || linkedTemplate()) loadStartupScene(); });
+window.addEventListener('hashchange', () => { if (linkedSize() || linkedTemplate() || linkedType()) loadStartupScene(); });
 
 // Button labels in Title Case, including buttons created or relabelled later
 function titleCase(s) { return s.replace(/(^|[\s(\/"“-])([a-z])/g, (m, a, b) => a + b.toUpperCase()).replace(/(\d)(\s?)(In|Ft|Mm|Cm|M)\b/g, (m, d, sp, u) => d + sp + u.toLowerCase()); }

@@ -162,7 +162,13 @@ section { padding-block: clamp(64px, 9vw, 112px); }
 /* Booth types */
 .types { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .type { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 22px; display: grid; gap: 12px; min-width: 0; }
-.type svg { width: 100%; height: auto; max-width: 160px; color: var(--carpet); }
+.type svg { width: auto; height: 100px; max-width: 100%; color: var(--carpet); }
+a.type { color: var(--ink); text-decoration: none; display: flex; flex-direction: column; }
+a.type svg { align-self: flex-start; }
+.type-go { margin-top: auto; padding-top: 4px; font: 700 14px var(--font-body); color: var(--accent); display: inline-flex; gap: 6px; }
+.type-go span { transition: transform .2s; }
+a.type:hover .type-go span, a.type:focus-visible .type-go span { transform: translateX(4px); }
+a.type:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .type h3 { font-size: 20px; }
 .type .meta { font: 400 12px var(--font-mono); color: var(--muted); }
 .type p { color: var(--muted); font-size: 14px; }
@@ -436,26 +442,26 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
         <p>The app adds the right walls for each type. Corner booths let you choose which side gets the partition.</p>
       </div>
       <div class="types">
-        <article class="type">
+        <a class="type" href="/app/#type-inline" aria-label="Open a 10 × 10 ft inline booth in the studio">
           <svg viewBox="0 0 160 110" aria-hidden="true"><rect x="12" y="12" width="136" height="86" rx="4" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="4 4"/><path d="M12 98V12h136v86" fill="none" stroke="currentColor" stroke-width="7"/></svg>
           <h3>Inline</h3><div class="meta">1 open side · back + 2 partitions</div>
           <p>The classic 10 × 10 or 10 × 20 in a row of exhibitors.</p>
-        </article>
-        <article class="type">
+        <span class="type-go">Open in the studio <span aria-hidden="true">→</span></span></a>
+        <a class="type" href="/app/#type-corner" aria-label="Open a 10 × 20 ft corner booth in the studio">
           <svg viewBox="0 0 160 110" aria-hidden="true"><rect x="12" y="12" width="136" height="86" rx="4" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="4 4"/><path d="M12 98V12h136" fill="none" stroke="currentColor" stroke-width="7"/></svg>
           <h3>Corner</h3><div class="meta">2 open sides · left or right partition</div>
           <p>End of a row, open to two aisles.</p>
-        </article>
-        <article class="type">
+        <span class="type-go">Open in the studio <span aria-hidden="true">→</span></span></a>
+        <a class="type" href="/app/#type-peninsula" aria-label="Open a 20 × 20 ft peninsula booth in the studio">
           <svg viewBox="0 0 160 110" aria-hidden="true"><rect x="12" y="12" width="136" height="86" rx="4" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="4 4"/><path d="M12 12h136" fill="none" stroke="currentColor" stroke-width="7"/></svg>
           <h3>Peninsula</h3><div class="meta">3 open sides · back wall only</div>
           <p>Backs onto one neighbor, open to three aisles.</p>
-        </article>
-        <article class="type">
+        <span class="type-go">Open in the studio <span aria-hidden="true">→</span></span></a>
+        <a class="type" href="/app/#type-island" aria-label="Open a 20 × 20 ft island booth in the studio">
           <svg viewBox="0 0 160 110" aria-hidden="true"><rect x="12" y="12" width="136" height="86" rx="4" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="4 4"/><path d="M58 55h44" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="80" cy="55" r="22" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3"/></svg>
           <h3>Island</h3><div class="meta">4 open sides · center wall + hanging sign</div>
           <p>Free-standing, visible from every aisle.</p>
-        </article>
+        <span class="type-go">Open in the studio <span aria-hidden="true">→</span></span></a>
       </div>
     </div>
   </section>
