@@ -253,6 +253,18 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
 .plan-note { font-size: 13px; color: var(--muted); min-height: 1em; margin: -8px 0 0; }
 .plans-foot { color: var(--muted); font-size: 14px; text-align: center; margin-top: 26px; }
 @media (max-width: 860px) { .plans { grid-template-columns: minmax(0, 1fr); max-width: 460px; margin-inline: auto; } }
+/* Blue bands (booth types, contact): same color in both themes; cards inside keep the page surface */
+.band-blue { --band: #4266b0; background: var(--band); color: #fff; position: relative; isolation: isolate; overflow: hidden; }
+.band-blue::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(70% 90% at 85% 0%, rgba(255,255,255,.14), transparent 60%), radial-gradient(60% 80% at 0% 100%, rgba(11,23,54,.35), transparent 65%); }
+.band-blue .sec-head h2 { color: #fff; }
+.band-blue .sec-head p, .band-blue > .wrap > p { color: rgba(255,255,255,.84); }
+.band-blue .eyebrow { color: #d5e2ff; }
+.band-blue .sec-head a, .band-blue > .wrap > p a { color: #fff; }
+.band-blue .type, .band-blue .contact-form { color: var(--ink); border-color: transparent; box-shadow: 0 24px 50px -28px rgba(8, 18, 45, .65); }
+.band-blue .type { transition: transform .2s, box-shadow .2s; }
+.band-blue .type:hover { transform: translateY(-3px); box-shadow: 0 30px 60px -28px rgba(8, 18, 45, .8); }
+@media (prefers-reduced-motion: reduce) { .band-blue .type:hover { transform: none; } }
 .contact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 40px; align-items: start; }
 .contact-form { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 26px; display: grid; gap: 16px; min-width: 0; }
 .field { display: grid; gap: 6px; min-width: 0; }
@@ -416,7 +428,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     </div>
   </section>
 
-  <section id="types">
+  <section id="types" class="band-blue">
     <div class="wrap">
       <div class="sec-head">
         <div class="eyebrow">Booth types</div>
@@ -618,7 +630,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     </div>
   </section>
 
-  <section id="contact" style="background:var(--surface);border-block:1px solid var(--line)">
+  <section id="contact" class="band-blue">
     <div class="wrap contact">
       <div class="sec-head contact-aside" style="margin:0">
         <div class="eyebrow">Contact</div>
