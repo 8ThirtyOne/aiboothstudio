@@ -90,7 +90,7 @@
       <div class="gen-btns"><button class="btn btn-primary" id="gen-img">Generate image · 1 credit</button><button class="btn" id="gen-vid">Generate 10-sec video · 1 credit</button></div>
       <div class="gen-buy" role="group" aria-label="Buy extra credits"><span class="gen-buy-lbl">Need more?</span>
         <label class="gen-buy-qty">Qty <select id="gen-buy-qty">${[1, 2, 3, 5, 10].map(n => `<option value="${n}">${n}</option>`).join("")}</select></label>
-        <button class="btn btn-sm" data-buy="image">Buy images · $7 each</button><button class="btn btn-sm" data-buy="video">Buy 10-sec videos · $10 each</button></div>
+        <button class="btn btn-sm" data-buy="image">Buy images · $5 each</button><button class="btn btn-sm" data-buy="video">Buy 10-sec videos · $10 each</button></div>
       <div class="gen-status" id="gen-status" aria-live="polite">Images take about 30 seconds. 10-second videos animate your latest AI image and take 2–4 minutes; you can keep working meanwhile.</div>
       <div class="ss-title">Your Generations</div><div class="gen-grid" id="gen-grid"></div>`;
     const dirBox = document.getElementById('gen-dir'), styleBtns = [...w.querySelectorAll('.gen-style')];
