@@ -268,7 +268,7 @@ a.step:hover h3 { color: var(--accent); }
 .walk-tip { font-size: 14px !important; color: var(--muted); border-left: 3px solid var(--accent); padding-left: 12px; }
 /* Numbered how-to list */
 .howto { list-style: none; counter-reset: how; padding: 0; margin: 4px 0 0; display: grid; gap: 12px; }
-.howto li { counter-increment: how; position: relative; padding-left: 42px; min-height: 30px; color: var(--ink); font-size: 15.5px; line-height: 1.5; padding-top: 3px; }
+.howto li { counter-increment: how; position: relative; font-family: var(--font-display); padding-left: 42px; min-height: 30px; color: var(--ink); font-size: 15.5px; line-height: 1.5; padding-top: 3px; }
 .howto li::before { content: counter(how); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font: 700 13px var(--font-body); }
 .howto li b { font-weight: 700; }
 .howto-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0 0 26px; }
