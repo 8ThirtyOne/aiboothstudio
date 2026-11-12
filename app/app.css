@@ -476,7 +476,8 @@ details.sec > .ss > .ss-label { display: none; }
 .acct-sent .acct-sent-small { font-size: 12px; }
 .cv-pill:hover { filter: brightness(1.06); }
 .cv-top-right { position: absolute; top: 14px; right: 14px; z-index: 7; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100% - 330px); }
-.cv-top-right .btn { border-radius: 999px; box-shadow: var(--shadow); border-color: var(--border); padding: 7px 13px; }
+.cv-top-right .btn { border-radius: 999px; box-shadow: var(--shadow); border-color: var(--border); padding: 0 16px; height: 38px; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; }
+.cv-top-right .btn.icon-btn { width: 38px; padding: 0; justify-content: center; }
 .cv-top-right .btn-primary { color: #fff; }
 .canvas-info { top: 66px; left: 14px; border-radius: 10px; box-shadow: var(--shadow); padding: 7px 11px; }
 .render-badge { top: auto; bottom: 74px; right: 14px; border-radius: 999px; box-shadow: var(--shadow); padding: 5px 11px; }
