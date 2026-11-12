@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AI Booth Studio</title>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-<script src="/js/claude-shim.js?v=67"></script>
+<script src="/js/claude-shim.js?v=68"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"></script>
-<script src="/js/config.js?v=67"></script>
-<script src="/js/accounts.js?v=67"></script>
+<script src="/js/config.js?v=68"></script>
+<script src="/js/accounts.js?v=68"></script>
 </head>
 <body>
 
@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Momo+Trust+Display&display=swap">
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
 
-<link rel="stylesheet" href="/app/app.css?v=67">
+<link rel="stylesheet" href="/app/app.css?v=68">
 
 <!-- HEADER -->
 <header>
@@ -427,8 +427,33 @@
   <div id="modal-card"><div class="modal-head"><h2 id="modal-title"></h2><button class="btn btn-sm" onclick="closeModal()" aria-label="Close">✕</button></div><div id="modal-body"></div></div>
 </div>
 
-<script type="module" src="/app/three-loader.js?v=67"></script>
+<script type="module" src="/app/three-loader.js?v=68"></script>
 
 
+<!-- Small-screen notice: the app is built for a large desktop screen -->
+<div class="screen-note" id="screen-note" role="dialog" aria-labelledby="screen-note-title" hidden>
+  <div class="screen-note-card">
+    <div class="screen-note-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+    <div class="screen-note-title" id="screen-note-title">Best on a large desktop screen</div>
+    <p>AI Booth Studio is built for a desktop or laptop. On a phone or small tablet, the 3D view and controls are too small to design comfortably.</p>
+    <p class="screen-note-small">For the best experience, open this page on a computer with a large screen.</p>
+    <div class="screen-note-btns"><button class="btn" id="screen-note-copy">Copy link</button><button class="btn btn-primary" id="screen-note-ok">Continue</button></div>
+  </div>
+</div>
+<script>
+(function () {
+  const note = document.getElementById("screen-note");
+  let seen = false; try { seen = sessionStorage.getItem("aibs-screen-note") === "1"; } catch {}
+  if (seen || window.innerWidth >= 1100) return;
+  note.hidden = false;
+  document.getElementById("screen-note-ok").onclick = () => { note.hidden = true; try { sessionStorage.setItem("aibs-screen-note", "1"); } catch {} };
+  const copy = document.getElementById("screen-note-copy");
+  copy.onclick = async () => {
+    const url = location.origin + "/app/";
+    try { await navigator.clipboard.writeText(url); copy.textContent = "Link copied"; }
+    catch { copy.textContent = url; }
+  };
+})();
+</script>
 </body>
 </html>

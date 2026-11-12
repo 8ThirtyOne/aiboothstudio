@@ -97,6 +97,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .hero .eyebrow { color: #669dff; }
 .hero h1 { line-height: 1; font-size: clamp(32px, 5.6vw, 73px); font-weight: 400; margin-top: 14px; max-width: 13ch; }
 .hero h1 em { font-style: normal; color: #669dff; }
+.hero-device { display: none; }
+@media (max-width: 460px) { .nav-cta-long { display: none; } .brand { white-space: nowrap; } .nav .wrap { gap: 16px; } }
+@media (max-width: 1099px) { .hero-device { display: flex; gap: 8px; align-items: center; margin-top: 18px; font-size: 13px; line-height: 1.45; color: rgba(244,247,251,.8); max-width: 44ch; } .hero-device::before { content: ""; flex: none; width: 18px; height: 18px; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Crect x=%272.5%27 y=%274%27 width=%2719%27 height=%2713%27 rx=%272%27/%3E%3Cpath d=%27M8 21h8M12 17v4%27/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27black%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Crect x=%272.5%27 y=%274%27 width=%2719%27 height=%2713%27 rx=%272%27/%3E%3Cpath d=%27M8 21h8M12 17v4%27/%3E%3C/svg%3E") center / contain no-repeat; } }
 .hero h1 strong { font-weight: inherit; color: #fff; }
 .hero .lede { margin-top: 18px; max-width: 52ch; font-family: "Bricolage Grotesque", var(--font-body); font-weight: 500; font-size: 18px; line-height: 1.5; color: rgba(244,247,251,.82); }
 .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
@@ -299,7 +302,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       <a href="#contact">Contact</a>
     </nav>
     <a class="nav-signin" href="/app/#signin">Sign In</a>
-    <a class="btn btn-primary" href="/app/">Design Your Booth</a>
+    <a class="btn btn-primary" href="/app/">Design<span class="nav-cta-long">&nbsp;Your Booth</span></a>
   </div>
 </header>
 
@@ -315,6 +318,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
           <a class="btn btn-primary" href="/app/">Start Designing</a>
           <a class="btn btn-ghost" href="#how">See The Workflow</a>
         </div>
+        <p class="hero-device">Designed for desktop. Open AI Booth Studio on a computer with a large screen for the best experience.</p>
       </div>
     </div>
       </section>
@@ -602,7 +606,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
         <h2>Questions exhibitors ask.</h2>
       </div>
       <div class="faq">
-        <details><summary>Do I need to install anything?</summary><p>No. AI Booth Studio runs in your web browser on a laptop or desktop. It works on a phone too, though a larger screen is easier for detailed editing.</p></details>
+        <details><summary>Do I need to install anything?</summary><p>No. AI Booth Studio runs in your web browser on a laptop or desktop. A large desktop or laptop screen is highly recommended. On a phone or small tablet, the 3D view and controls are too small to design comfortably.</p></details>
         <details><summary>How do the AI features work?</summary><p>AI is built in and included with every pass: AI build, photo-to-3D, and photo-realistic images and video. Each pass includes a set number of AI actions and image and video credits. Nothing extra to sign up for.</p></details>
         <details><summary>How do I get the ultra-realistic image or video?</summary><p>Once your booth is designed, click Generate. AI uses your render and your art direction to create a photo-realistic image or a short video clip of the finished booth, right in the app. Each pass includes credits: 4 images and 2 videos for a week, 6 images and 4 videos for a month, or 30 images and 10 videos for a year. Need more? Buy extra images for $7 each or videos for $15 each from the AI Render window. They&rsquo;re added to your pass and can be used until it ends.</p></details>
         <details><summary>Do I need design or 3D experience?</summary><p>No. You can start from a sentence or a photo, and change anything by clicking it. Every step is guided, from the first layout to the final photo-realistic visual.</p></details>
