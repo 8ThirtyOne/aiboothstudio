@@ -6,12 +6,13 @@
 <meta name="robots" content="noindex">
 <title>Thank You – AI Booth Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Momo+Trust+Display&family=Manrope:wght@500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Momo+Trust+Display&family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Manrope:wght@500;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
   :root { --bg: #f5f6f8; --surface: #ffffff; --ink: #111827; --muted: #5b6474; --line: #e1e5ec; --accent: #2563eb; --eyebrow: #2563eb; }
   @media (prefers-color-scheme: dark) { :root { --bg: #0d1118; --surface: #151b25; --ink: #e9edf4; --muted: #98a2b3; --line: #252d3a; --accent: #669dff; --eyebrow: #669dff; color-scheme: dark; } }
   * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink); font: 500 16px/1.6 Manrope, system-ui, sans-serif; padding: 32px max(16px, env(safe-area-inset-left, 0px)) 32px max(16px, env(safe-area-inset-right, 0px)); }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); font: 500 16px/1.6 Manrope, system-ui, sans-serif; }
+  .page { min-height: calc(100vh - 70px); display: grid; place-items: center; padding: 32px max(16px, env(safe-area-inset-right, 0px)) 32px max(16px, env(safe-area-inset-left, 0px)); }
   .card { width: 100%; max-width: 560px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: clamp(28px, 6vw, 44px); display: grid; gap: 16px; }
   .eyebrow { font: 500 12px/1.2 "IBM Plex Mono", ui-monospace, monospace; letter-spacing: .25em; text-transform: uppercase; color: var(--eyebrow); }
   h1 { font: 400 clamp(30px, 6vw, 40px)/1.1 "Momo Trust Display", system-ui, sans-serif; margin: 0; text-wrap: balance; }
@@ -21,9 +22,44 @@
   .btn { display: inline-flex; border-radius: 999px; padding: 11px 20px 13px; font: 700 15px Manrope, system-ui, sans-serif; text-decoration: none; }
   .btn-primary { background: var(--accent); color: #fff; }
   .btn-line { border: 1px solid var(--line); color: var(--ink); }
+
+  /* Site header, same as the landing page */
+  .site-nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: rgba(0, 0, 0, .85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,.08); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 21; background: #000; }
+  .site-nav-in { max-width: 1180px; margin: 0 auto; display: flex; align-items: center; gap: 24px; padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); }
+  .site-brand { display: flex; align-items: center; gap: 10px; color: #f4f7fb; text-decoration: none; font: 800 18px/1 "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif; letter-spacing: -.01em; white-space: nowrap; }
+  .site-brand svg { width: 32px; height: 32px; flex: none; fill: #669dff; }
+  .site-links { display: flex; gap: 22px; margin-left: auto; }
+  .site-links a { color: rgba(244,247,251,.75); text-decoration: none; font: 700 14px/1 Manrope, system-ui, sans-serif; padding-right: 8pt; }
+  .site-links a:hover, .site-signin:hover { color: #fff; }
+  .site-signin { color: rgba(244,247,251,.85); text-decoration: none; font: 700 14px/1 Manrope, system-ui, sans-serif; white-space: nowrap; }
+  .site-cta { display: inline-flex; align-items: center; border-radius: 999px; padding: 11px 20px 13px; font: 700 15px/1 Manrope, system-ui, sans-serif; text-decoration: none; white-space: nowrap; background: #2563eb; color: #fff; box-shadow: 0 8px 22px rgba(37, 99, 235, .35); transition: transform .15s; }
+  .site-cta:hover { transform: translateY(-1px); }
+  @media (max-width: 680px) { .site-links { display: none; } .site-signin { margin-left: auto; } .site-cta { padding: 9px 16px 11px; } }
+  @media (max-width: 460px) { .site-cta-long { display: none; } .site-nav-in { gap: 16px; } }
+  @media (max-width: 380px) { .site-brand { font-size: 16px; } .site-nav-in { gap: 14px; } }
 </style>
 </head>
 <body>
+<header class="site-nav">
+  <div class="site-nav-in">
+    <a class="site-brand" href="/" aria-label="AI Booth Studio home">
+      <svg viewBox="13 16 156 150" aria-hidden="true"><path d="M128.6 61 81.6 45.8V23.5l73.5 27z"/><path d="M71.9,141.9V23.5L25.8,58.3l-9.5,104,1.5-.5c15.2-9.9,33.5-16.8,53.6-19.6l.6-.2Z"/><path d="M160,56.6l-34.9,12.9v73.8c15.6,3,30,8.5,42.5,15.9l-7.6-102.6Z"/></svg>
+      AI Booth Studio
+    </a>
+    <nav class="site-links" aria-label="Sections">
+      <a href="/#how">Workflow</a>
+      <a href="/#features">Features</a>
+      <a href="/#types">Booth Types</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/#contact">Contact</a>
+    </nav>
+    <a class="site-signin" href="/app/#signin">Sign In</a>
+    <a class="site-cta" href="/app/">Design<span class="site-cta-long">&nbsp;Your Booth</span></a>
+  </div>
+</header>
+  <div class="page">
   <main class="card">
     <div class="eyebrow">Payment received</div>
     <h1>Thanks, your pass is ready.</h1>
@@ -38,5 +74,6 @@
       <a class="btn btn-line" href="/">Back to the Site</a>
     </div>
   </main>
+</div>
 </body>
 </html>
