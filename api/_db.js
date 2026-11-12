@@ -106,3 +106,21 @@ export async function useAiAction(passId) {
   const ok = await rest("rpc/use_ai_action", { method: "POST", body: { p_pass: passId } });
   return ok === true;
 }
+
+// ── Extra credits bought on top of a pass
+// Records a paid top-up once per Stripe session. Returns the new row, or null when it was already recorded.
+export async function recordTopup({ stripeSession, passId, email, kind, qty, amountCents, livemode }) {
+  const rows = await rest("credit_purchases?on_conflict=stripe_session", {
+    method: "POST",
+    body: { stripe_session: stripeSession, pass_id: passId, email: email.toLowerCase(), kind, qty, amount_cents: amountCents, livemode },
+    prefer: "resolution=ignore-duplicates,return=representation",
+  });
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+export async function addMediaCredits(passId, kind, qty) {
+  return (await rest("rpc/add_media_credits", { method: "POST", body: { p_pass: passId, p_kind: kind, p_qty: qty } })) === true;
+}
+export async function passById(id) {
+  const rows = await rest(`passes?select=*&id=eq.${encodeURIComponent(id)}&limit=1`);
+  return rows && rows[0] ? rows[0] : null;
+}

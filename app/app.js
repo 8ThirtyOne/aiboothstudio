@@ -3208,7 +3208,7 @@ function openTemplates() {
 }
 
 // Generate: photo-realistic image and video (preview until passes and the generation service are connected)
-const GEN_PASSES = { week: { name: '1 Week Pass', img: 3, vid: 1 }, month: { name: '1 Month Pass', img: 6, vid: 2 }, year: { name: '1 Year Pass', img: 30, vid: 8 } };
+const GEN_PASSES = { week: { name: '1 Week Pass', img: 4, vid: 2 }, month: { name: '1 Month Pass', img: 6, vid: 4 }, year: { name: '1 Year Pass', img: 30, vid: 10 } };
 const genState = { pass: 'week', used: { img: 0, vid: 0 }, items: [] };
 function openGenerate() {
   const body = openModal('AI Render', true);
@@ -3321,10 +3321,11 @@ function openAccountLive() {
       <div class="acct-row"><span>Pass</span><b>${p ? p.name + (r.livemode ? '' : ' (test)') : 'No active pass'}</b></div>
       ${r ? `<div class="acct-row"><span>Active until</span><b>${fmtDate(r.ends_at)}</b></div>` : ''}
     </div>
-    ${r ? `<div class="gen-credits">${r.ai_total ? `<div class="gen-chip"><b>${r.ai_total - r.ai_used} / ${r.ai_total}</b><span>AI actions left</span></div>` : ''}<div class="gen-chip"><b>${r.images_total - r.images_used} / ${r.images_total}</b><span>Images left</span></div><div class="gen-chip"><b>${r.videos_total - r.videos_used} / ${r.videos_total}</b><span>Videos left</span></div></div>` : '<p style="font-size:13px;color:var(--fg-muted);line-height:1.5">Buy a pass with this email to unlock AI features and image and video credits. It shows up here a few seconds after checkout.</p>'}
+    ${r ? `<div class="gen-credits">${r.ai_total ? `<div class="gen-chip"><b>${r.ai_total - r.ai_used} / ${r.ai_total}</b><span>AI actions left</span></div>` : ''}<div class="gen-chip"><b>${r.images_total - r.images_used} / ${r.images_total}</b><span>Images left</span></div><div class="gen-chip"><b>${r.videos_total - r.videos_used} / ${r.videos_total}</b><span>Videos left</span></div></div><button class="btn btn-primary" id="acct-more">Buy extra images or videos</button>` : '<p style="font-size:13px;color:var(--fg-muted);line-height:1.5">Buy a pass with this email to unlock AI features and image and video credits. It shows up here a few seconds after checkout.</p>'}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${r ? '<button class="btn" id="acct-refresh">Refresh</button>' : '<a class="btn btn-primary" href="/#pricing" style="text-align:center">See passes</a>'}<button class="btn" id="acct-out">Sign out</button></div>
     <div class="acct-msg" id="acct-msg" aria-live="polite"></div>`;
   document.getElementById('acct-who').textContent = acct.email;
+  const more = document.getElementById('acct-more'); if (more) more.onclick = () => window.openGenerate();
   const rf = document.getElementById('acct-refresh'); if (rf) rf.onclick = async () => { rf.disabled = true; await window.aibdAuth.refresh(); };
   document.getElementById('acct-out').onclick = async () => { await window.aibdAuth.signOut(); closeModal(); };
 }
@@ -3371,7 +3372,7 @@ function openAccountPreview() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" id="acct-topup">Buy more credits</button><button class="btn" id="acct-out">Sign out</button></div>
     <div class="acct-msg" id="acct-msg" aria-live="polite"></div>`;
   document.getElementById('acct-pass').onchange = e => { acct.pass = e.target.value; genState.pass = acct.pass; genState.used = { img: 0, vid: 0 }; openAccount(); };
-  document.getElementById('acct-topup').onclick = () => { document.getElementById('acct-msg').textContent = 'Top-ups (5 images for $19, 1 video for $15) open with checkout.'; };
+  document.getElementById('acct-topup').onclick = () => { document.getElementById('acct-msg').textContent = 'Extra credits: $7 per image, $15 per video, bought from the AI Render window.'; };
   document.getElementById('acct-out').onclick = () => { acct.signedIn = false; acct.name = ''; drawAcctBtn(); closeModal(); };
 }
 
@@ -3531,7 +3532,7 @@ async function importDesignFile(e) {
   const top = document.createElement('div'); top.className = 'side-top';
   const brand = document.createElement('div'); brand.className = 'side-brand';
   brand.append($('header .logo'));
-  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v65'; brand.append(ver);
+  const ver = document.createElement('span'); ver.className = 'ver'; ver.textContent = 'v66'; brand.append(ver);
   const tabs = $('header .htabs');
   ['Booth', 'Items', 'Brand', 'Specs'].forEach((t, i) => { tabs.children[i].textContent = t; });
   top.append(brand, tabs); sidebar.prepend(top);

@@ -4,9 +4,9 @@
 // For now a completed purchase is logged and emailed to CONTACT_TO; once accounts exist,
 // this is where the buyer's pass and credits get switched on.
 import crypto from "node:crypto";
-import { PLANS } from "./_plans.js";
+import { ADDONS, PLANS } from "./_plans.js";
 import { brandedEmail, esc, sendToCustomer, sendToOwner } from "./_email.js";
-import { dbConfigured, recordPass } from "./_db.js";
+import { addMediaCredits, dbConfigured, passById, recordPass, recordTopup } from "./_db.js";
 
 const TOLERANCE_SECONDS = 300;
 
@@ -45,6 +45,7 @@ export default async function handler(req, res) {
 
   if (event.type === "checkout.session.completed") {
     const s = event.data?.object || {};
+    if (s.metadata?.addon) return handleTopup(req, res, event, s);
     const plan = PLANS[s.metadata?.plan];
     const email = s.customer_details?.email || "unknown";
     const paid = s.amount_total != null ? `$${(s.amount_total / 100).toFixed(2)} ${String(s.currency || "").toUpperCase()}` : "unknown";
@@ -120,5 +121,64 @@ export default async function handler(req, res) {
     }
   }
 
+  return res.status(200).json({ received: true });
+}
+
+// Extra AI Render credits: added to the pass they were bought for, once per Stripe session.
+async function handleTopup(req, res, event, s) {
+  const kind = s.metadata.addon, addon = ADDONS[kind];
+  const qty = Math.floor(Number(s.metadata.qty));
+  const passId = String(s.metadata.pass_id || "");
+  const email = s.customer_details?.email || s.customer_email || "unknown";
+  const paid = s.amount_total != null ? `$${(s.amount_total / 100).toFixed(2)} ${String(s.currency || "").toUpperCase()}` : "unknown";
+  const test = !event.livemode;
+  console.log("topup", JSON.stringify({ mode: test ? "TEST" : "LIVE", kind, qty, email, paid, session: s.id, status: s.payment_status }));
+  if (s.payment_status !== "paid" || !addon || !(qty > 0) || !passId || !dbConfigured()) return res.status(200).json({ received: true });
+
+  let added = false, row = null, pass = null;
+  try {
+    row = await recordTopup({ stripeSession: s.id, passId, email: email === "unknown" ? "" : email, kind, qty, amountCents: s.amount_total ?? null, livemode: !!event.livemode });
+    if (!row) return res.status(200).json({ received: true, duplicate: true }); // already handled
+    added = await addMediaCredits(passId, kind, qty);
+    pass = await passById(passId).catch(() => null);
+  } catch (err) {
+    console.error("topup failed", err?.message);
+    if (!row) return res.status(500).json({ error: "record_failed" }); // Stripe retries later
+  }
+
+  const what = `${qty} extra AI ${kind}${qty === 1 ? "" : "s"}`;
+  const left = pass ? (kind === "image" ? pass.images_total - pass.images_used : pass.videos_total - pass.videos_used) : null;
+  const pi = typeof s.payment_intent === "string" ? s.payment_intent : s.payment_intent?.id;
+  const dashboard = `https://dashboard.stripe.com/${test ? "test/" : ""}${pi ? `payments/${pi}` : "payments"}`;
+  const html = brandedEmail({
+    eyebrow: test ? "Payment received · test" : "Payment received",
+    title: `${what} purchased for ${paid}`,
+    rows: [["Credits", esc(what)], ["Amount", esc(paid)], ["Customer", esc(email)], ["Mode", test ? "Test payment" : "Live payment"]],
+    panelHtml: added ? "The credits were added to the customer's pass." : "The credits couldn't be added automatically, so they still need to be added by hand.",
+    button: { href: dashboard, label: "View in Stripe" },
+    footer: `Stripe session ${s.id}`,
+  });
+  await sendToOwner({ subject: `${test ? "[Test] " : ""}Extra credits: ${what} (${paid})`, text: `${what} for ${paid} from ${email}. ${added ? "Added to the pass." : "Needs adding by hand."}\n${dashboard}`, html, replyTo: email !== "unknown" ? email : undefined });
+
+  if (email !== "unknown") {
+    const site = `https://${req.headers["x-forwarded-host"] || req.headers.host}`;
+    const until = pass ? new Date(pass.ends_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }) : "";
+    const rows = [["Added", esc(what)], ["Amount paid", esc(paid)]];
+    if (left != null) rows.push([kind === "image" ? "Images now left" : "Videos now left", String(left)]);
+    if (until) rows.push(["Use them by", esc(until)]);
+    await sendToCustomer({
+      to: email,
+      subject: `${test ? "[Test] " : ""}Your extra AI ${kind}s are ready`,
+      text: `${what} ${qty === 1 ? "was" : "were"} added to your AI Booth Studio pass${until ? `. Use ${qty === 1 ? "it" : "them"} by ${until}` : ""}.\nOpen ${site}/app/ and click AI Render.`,
+      html: brandedEmail({
+        eyebrow: test ? "Payment confirmed · test" : "Payment confirmed",
+        title: `Your extra AI ${kind}${qty === 1 ? " is" : "s are"} ready`,
+        rows,
+        panelHtml: added ? "Already on your pass. Open the app and click <b>AI Render</b> to use them." : "They're being added to your pass and will be ready shortly.",
+        button: { href: `${site}/app/`, label: "Open AI Booth Studio" },
+        footer: "Your card receipt comes separately from Stripe. Questions? Just reply to this email.",
+      }),
+    });
+  }
   return res.status(200).json({ received: true });
 }

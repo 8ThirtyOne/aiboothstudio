@@ -88,6 +88,9 @@
       <div class="gen-styles" role="group" aria-label="Art direction styles">${STYLES.map(s => `<div class="gen-style" role="button" tabindex="0" data-style="${s.id}">${s.name}</div>`).join('')}</div>
       <textarea class="gen-dir" id="gen-dir" rows="3" aria-label="Art direction" placeholder="Art direction (optional), e.g. busy show hours, warm evening light"></textarea>
       <div class="gen-btns"><button class="btn btn-primary" id="gen-img">Generate image · 1 credit</button><button class="btn" id="gen-vid">Generate video · 1 credit</button></div>
+      <div class="gen-buy" role="group" aria-label="Buy extra credits"><span class="gen-buy-lbl">Need more?</span>
+        <label class="gen-buy-qty">Qty <select id="gen-buy-qty">${[1, 2, 3, 5, 10].map(n => `<option value="${n}">${n}</option>`).join("")}</select></label>
+        <button class="btn btn-sm" data-buy="image">Buy images · $7 each</button><button class="btn btn-sm" data-buy="video">Buy videos · $15 each</button></div>
       <div class="gen-status" id="gen-status" aria-live="polite">Images take about 30 seconds. Videos animate your latest AI image and take 1–3 minutes; you can keep working meanwhile.</div>
       <div class="ss-title">Your Generations</div><div class="gen-grid" id="gen-grid"></div>`;
     const dirBox = document.getElementById('gen-dir'), styleBtns = [...w.querySelectorAll('.gen-style')];
@@ -101,12 +104,13 @@
     modeBtns.forEach(b => { b.onclick = () => setMode(b.dataset.mode); b.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMode(b.dataset.mode); } }; }); setMode(live.mode);
     document.getElementById('gen-img').onclick = () => start('image');
     document.getElementById('gen-vid').onclick = () => start('video');
+    w.querySelectorAll('[data-buy]').forEach(b => { b.onclick = () => buy(b.dataset.buy, Number(document.getElementById('gen-buy-qty').value), b); });
     draw(); if (!live.loaded) loadList();
   }
 
   async function start(kind, sourceUrl) {
     const st = document.getElementById('gen-status'), btn = document.getElementById(kind === 'image' ? 'gen-img' : 'gen-vid');
-    const c = credits(); if (!c || (kind === 'image' ? c.img : c.vid) <= 0) { st.textContent = `No ${kind} credits left on your pass.`; return; }
+    const c = credits(); if (!c || (kind === 'image' ? c.img : c.vid) <= 0) { st.textContent = `No ${kind} credits left on your pass. Buy more below.`; return; }
     btn.disabled = true;
     try {
       const src = kind === 'video' ? (sourceUrl || latestImage()?.result_url || null) : null;
@@ -120,6 +124,15 @@
       st.textContent = kind === 'image' ? 'Creating your image. It appears below in about 30 seconds.' : 'Creating your video. It appears below in 1–3 minutes; you can close this window and keep working.';
     } catch (e) { st.textContent = e?.message || "AI Render couldn't start. Try again."; }
     btn.disabled = false; draw();
+  }
+
+  // Extra credits: opens Stripe Checkout; the credits are added to the pass when payment completes.
+  async function buy(kind, qty, btn) {
+    const st = document.getElementById('gen-status'), label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Opening checkout…';
+    try { const { url } = await api('/api/checkout', { method: 'POST', body: JSON.stringify({ addon: kind, qty }) }); location.href = url; return; }
+    catch (e) { st.textContent = e?.message || "Couldn't open checkout. Try again."; }
+    btn.disabled = false; btn.textContent = label;
   }
 
   function draw() {
@@ -148,4 +161,20 @@
   window.openGenerate = openRender;
   const btn = document.querySelector('.cv-gen'); if (btn) btn.onclick = openRender;
   auth.onChange(st => { if (!st.user) { live.items = []; live.loaded = false; } draw(); });
+})();
+
+// Back from buying extra credits: show the AI Render window and pick up the new credits.
+(function afterCreditPurchase() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('credits') !== 'added' || !window.aibdAuth) return;
+  q.delete('credits'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash);
+  let shown = false;
+  const show = () => {
+    if (shown || !acct.signedIn) return; shown = true;
+    window.openGenerate();
+    const st = document.getElementById('gen-status');
+    if (st) st.textContent = 'Payment received. Your extra credits appear here in a few seconds.';
+    [3000, 8000, 15000].forEach(ms => setTimeout(() => window.aibdAuth.refresh(), ms));
+  };
+  window.aibdAuth.onChange(show); setTimeout(show, 1500);
 })();
