@@ -422,6 +422,39 @@ a.step:hover h3 { color: var(--accent); }
           <a class="btn btn-primary" href="/app/">Start Designing</a>
           <a class="btn btn-ghost" href="#how">See The Workflow</a>
         </div>
+        <script>
+          // A/B test "hero1": half of visitors see the original hero (A), half see the executive-focused version (B).
+          // The choice is kept per browser so each visitor always sees the same one. Add ?ab=a or ?ab=b to preview either
+          // version; previews are never counted. Counts go to /api/ab: no names, emails or personal data, just a random visitor id.
+          (() => {
+            const TEST = "hero1", store = (k, v) => { try { return v === undefined ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch { return null; } };
+            const forced = new URLSearchParams(location.search).get("ab");
+            let v = forced === "a" || forced === "b" ? forced : store("aibs_ab_" + TEST);
+            if (v !== "a" && v !== "b") { v = Math.random() < .5 ? "a" : "b"; store("aibs_ab_" + TEST, v); }
+            if (v === "b") {
+              const q = s => document.querySelector(s);
+              q(".hero-copy .eyebrow").textContent = "For executives pitching their trade show presence";
+              q("#hero-title").innerHTML = "See your <em>trade show presence</em> <strong>before it&rsquo;s built</strong>";
+              q(".hero-copy .lede").textContent = "Give investors, your board and your team a photo-realistic look at your booth in minutes, not weeks. Describe the idea, refine it in 3D, add your brand, and AI turns it into presentation-ready images and video.";
+              q(".hero-ctas .btn-primary").textContent = "Visualize My Booth";
+            }
+            document.documentElement.dataset.hero = v;
+            if (forced) return; // preview: don't count
+            let id = store("aibs_vid"); if (!id) { id = Math.random().toString(36).slice(2) + Date.now().toString(36); store("aibs_vid", id); }
+            const send = event => { const body = JSON.stringify({ test: TEST, variant: v, event, visitor: id });
+              if (!(navigator.sendBeacon && navigator.sendBeacon("/api/ab", new Blob([body], { type: "application/json" })))) fetch("/api/ab", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => {}); };
+            const day = new Date().toISOString().slice(0, 10);
+            if (store("aibs_ab_seen_" + TEST) !== day) { store("aibs_ab_seen_" + TEST, day); send("view"); }
+            // What counts as a result: opening the studio from the hero, from anywhere, starting a checkout, or sending the contact form
+            document.addEventListener("click", e => {
+              const a = e.target.closest("a, button"); if (!a) return;
+              if (a.matches(".hero-ctas .btn-primary")) send("hero_cta");
+              if (a.matches("[data-plan]")) send("buy_click");
+              if (a.getAttribute("href")?.startsWith("/app/")) send("open_app");
+            }, true);
+            document.addEventListener("submit", e => { if (e.target.id === "contact-form") send("contact"); }, true);
+          })();
+        </script>
         <p class="hero-device">Designed for desktop. Open AI Booth Studio on a computer with a large screen for the best experience.</p>
       </div>
     </div>

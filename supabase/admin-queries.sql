@@ -79,3 +79,27 @@ select plan, count(*) from public.passes where ends_at > now() and livemode grou
 select kind, status, count(*) from public.renders
 where created_at > now() - interval '30 days'
 group by kind, status order by kind, status;
+
+
+-- ── A/B tests ──────────────────────────────────────────────────────
+
+-- Hero test results: unique visitors who saw each version, and how many of them took each action.
+-- A = "Showcase your booth vision with ease"   B = "See your trade show presence before it's built"
+-- Give it at least a few hundred visitors per version before trusting a difference.
+with v as (
+  select variant, visitor,
+         bool_or(event = 'view')      as saw,
+         bool_or(event = 'hero_cta')  as hero_cta,
+         bool_or(event = 'open_app')  as open_app,
+         bool_or(event = 'buy_click') as buy_click,
+         bool_or(event = 'contact')   as contact
+  from public.ab_events where test = 'hero1' group by variant, visitor
+)
+select variant,
+       count(*) filter (where saw)                                    as visitors,
+       count(*) filter (where saw and hero_cta)                       as clicked_hero_button,
+       round(100.0 * count(*) filter (where saw and hero_cta)  / nullif(count(*) filter (where saw), 0), 1) as hero_button_pct,
+       round(100.0 * count(*) filter (where saw and open_app)  / nullif(count(*) filter (where saw), 0), 1) as opened_studio_pct,
+       round(100.0 * count(*) filter (where saw and buy_click) / nullif(count(*) filter (where saw), 0), 1) as started_checkout_pct,
+       count(*) filter (where saw and contact)                        as contact_forms
+from v group by variant order by variant;

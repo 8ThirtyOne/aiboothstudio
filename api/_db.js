@@ -153,3 +153,8 @@ export async function takeBackTopup(t) {
   const rows = await rest(`passes?id=eq.${encodeURIComponent(pass.id)}`, { method: "PATCH", body: { [col[0]]: next }, prefer: "return=representation" });
   return Array.isArray(rows) && rows[0] ? rows[0] : null;
 }
+
+// ── A/B tests (needs supabase/008_ab_tests.sql)
+export async function recordAbEvent({ test, variant, event, visitor }) {
+  await rest("ab_events", { method: "POST", body: { test, variant, event, visitor }, prefer: "return=minimal" });
+}
