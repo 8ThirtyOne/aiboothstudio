@@ -11,6 +11,7 @@
   :root { --bg: #f5f6f8; --surface: #ffffff; --ink: #111827; --muted: #5b6474; --line: #e1e5ec; --accent: #2563eb; --tint: #eaf1ff; --ok: #15803d; }
   @media (prefers-color-scheme: dark) { :root { --bg: #0d1118; --surface: #151b25; --ink: #e9edf4; --muted: #98a2b3; --line: #252d3a; --accent: #669dff; --tint: #17233d; --ok: #4ade80; color-scheme: dark; } }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.6 "Bricolage Grotesque", system-ui, sans-serif; }
   .bar { background: #0b0f16; color: #f4f7fb; }
   .bar .in { max-width: 1040px; margin: 0 auto; padding: 14px max(20px, env(safe-area-inset-right, 0px)) 14px max(20px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; }
@@ -44,6 +45,38 @@
   .addr { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
   .addr code { font: 600 15px "Bricolage Grotesque", system-ui, sans-serif; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; user-select: all; }
   .addr button { font: 700 14px "Bricolage Grotesque", system-ui, sans-serif; border: 0; border-radius: 999px; padding: 9px 16px; background: var(--accent); color: #fff; cursor: pointer; }
+  .about { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 24px 26px; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+  .about-txt { display: grid; gap: 10px; }
+  .about-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: s; }
+  .about-steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 10px; align-items: center; font-size: 13.5px; color: var(--muted); }
+  .about-steps li::before { content: counter(s); grid-row: span 2; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 13px; }
+  .about-steps b { color: var(--ink); font-size: 15px; }
+  form { display: grid; gap: 16px; }
+  .choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .choice { position: relative; cursor: pointer; }
+  .choice input { position: absolute; opacity: 0; inset: 0; }
+  .choice span { display: grid; gap: 3px; height: 100%; border: 2px solid var(--line); border-radius: 12px; padding: 14px 16px; font-size: 13.5px; color: var(--muted); transition: border-color .15s, background .15s; }
+  .choice b { font-size: 16px; color: var(--ink); }
+  .choice:hover span { border-color: color-mix(in srgb, var(--k) 50%, var(--line)); }
+  .choice input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .choice input:checked + span { border-color: var(--k); background: color-mix(in srgb, var(--k) 10%, transparent); }
+  .choice input:checked + span b { color: var(--k); }
+  .c-yes { --k: #16a34a; } .c-no { --k: #dc2626; } .c-talk { --k: #d97706; }
+  .field { display: grid; gap: 6px; font-weight: 700; font-size: 14px; }
+  .field span { font-weight: 400; color: var(--muted); }
+  .field input, .field textarea { font: 400 15px "Bricolage Grotesque", system-ui, sans-serif; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; width: 100%; resize: vertical; }
+  .field input:focus, .field textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .send-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .send { font: 700 16px "Bricolage Grotesque", system-ui, sans-serif; border: 0; border-radius: 999px; padding: 13px 34px; background: var(--accent); color: #fff; cursor: pointer; box-shadow: 0 8px 22px rgba(37, 99, 235, .3); }
+  .send:disabled { opacity: .6; cursor: default; }
+  .msg { font-size: 14px; color: #dc2626; }
+  .thanks { text-align: center; display: grid; gap: 10px; justify-items: center; padding: 18px 0 8px; }
+  .thanks-icon { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: #16a34a; color: #fff; font-size: 32px; font-weight: 700; }
+  .thanks h2 { font-size: 28px; }
+  .thanks .small { font-size: 14px; }
+  @media (max-width: 780px) { .about { grid-template-columns: minmax(0, 1fr); } .choices, .field-row { grid-template-columns: minmax(0, 1fr); } }
   footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
   @media (max-width: 780px) { .item { grid-template-columns: minmax(0, 1fr); } .opts { grid-template-columns: minmax(0, 1fr); } }
 </style>
@@ -58,8 +91,22 @@
   <section class="intro">
     <div class="eyebrow">Image approval request</div>
     <h1>Featuring the Life Science Incubator booth on our website</h1>
-    <p>We&rsquo;d like to show photo-realistic visuals of the Life Science Incubator (LSI) trade show booth on the AI Booth Studio website, as an example of what the service produces. Below is every place LSI&rsquo;s booth, name and logo would appear, exactly as visitors would see it. Please review and let us know if we have your approval.</p>
+    <p>We&rsquo;d like to show photo-realistic visuals of the Life Science Incubator (LSI) trade show booth on the AI Booth Studio website, as an example of what the service produces. Below is every place LSI&rsquo;s booth, name and logo would appear, exactly as visitors would see it. Please review, then use the short form at the bottom to approve, approve with changes, or decline.</p>
     <div class="meta"><div>Website: <b>aiboothstudio.com</b> (not yet public)</div><div>Operated by: <b>8ThirtyOne</b></div><div>Requested: <b>November 13, 2026</b></div></div>
+  </section>
+
+  <section class="about">
+    <div class="about-txt">
+      <h2>About AI Booth Studio</h2>
+      <p>AI Booth Studio is a new web app from 8ThirtyOne that helps companies visualize their trade show presence before anything is built. You describe a booth in a sentence or start from a standard size, shape it in 3D, and add your brand. AI then turns the design into photo-realistic images and short videos for investor decks, board presentations and internal sign-off.</p>
+      <p>It&rsquo;s a concept-visualization tool for leaders and their teams, not a fabrication or CAD tool. Exhibit houses still build the real booth.</p>
+    </div>
+    <ol class="about-steps">
+      <li><b>Describe</b>A sentence or a photo</li>
+      <li><b>Shape</b>Edit it in 3D</li>
+      <li><b>Brand</b>Logo, colors, artwork</li>
+      <li><b>Render</b>Photo-realistic image &amp; video</li>
+    </ol>
   </section>
 
   <article class="item">
@@ -104,26 +151,56 @@
     </ul>
   </section>
 
-  <section class="reply">
-    <h2>How to reply</h2>
-    <p>Just reply to the email this link came in, or write to the address below with one of these:</p>
-    <div class="opts">
-      <div class="opt yes"><b>Approved</b>Fine to use all three as shown.</div>
-      <div class="opt"><b>Approved with changes</b>Tell us what to change, for example remove a use or swap an image.</div>
-      <div class="opt"><b>Not approved</b>We&rsquo;ll leave LSI off the site.</div>
+  <section class="reply" id="reply">
+    <form id="review-form" novalidate>
+      <h2>Your decision</h2>
+      <p>Pick one, add any comments, and press Send. It comes straight to us. No email needed.</p>
+      <div class="choices" role="radiogroup" aria-label="Your decision">
+        <label class="choice c-yes"><input type="radio" name="decision" value="approve"><span><b>&#10003; Approve</b>Fine to use all three as shown.</span></label>
+        <label class="choice c-talk"><input type="radio" name="decision" value="changes"><span><b>&#9998; Approve with changes</b>Tell us what to change in the comments.</span></label>
+        <label class="choice c-no"><input type="radio" name="decision" value="disapprove"><span><b>&#10005; Don&rsquo;t approve</b>We&rsquo;ll leave LSI off the site.</span></label>
+      </div>
+      <label class="field">Comments <span>(needed for Approve with changes)</span>
+        <textarea name="comments" rows="4" maxlength="4000" placeholder="For example: approved, but please use only the image, not the video."></textarea>
+      </label>
+      <div class="field-row">
+        <label class="field">Your name <span>(optional)</span><input name="name" autocomplete="name" maxlength="120"></label>
+        <label class="field">Your email <span>(so we can follow up)</span><input name="email" type="email" autocomplete="email" maxlength="200"></label>
+      </div>
+      <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="send-row"><button type="submit" class="send" id="send">Send</button><span class="msg" id="msg" aria-live="polite"></span></div>
+    </form>
+    <div class="thanks" id="thanks" hidden>
+      <div class="thanks-icon" aria-hidden="true">&#10003;</div>
+      <h2>Thank you!</h2>
+      <p id="thanks-line">We&rsquo;ve received your reply and will follow up shortly.</p>
+      <p class="small">Questions anytime: <b>support@aiboothstudio.com</b></p>
     </div>
-    <div class="addr"><code id="addr">support@aiboothstudio.com</code><button type="button" id="copy">Copy address</button></div>
   </section>
 
   <footer>This page is for review only. It isn&rsquo;t linked from the website or listed in search engines.</footer>
 </main>
 <script>
-  document.getElementById('copy').onclick = async e => {
-    const b = e.currentTarget;
-    try { await navigator.clipboard.writeText('support@aiboothstudio.com'); b.textContent = 'Copied'; }
-    catch { const r = document.createRange(); r.selectNodeContents(document.getElementById('addr')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Address selected'; }
-    setTimeout(() => { b.textContent = 'Copy address'; }, 2000);
-  };
+  // Reply form: sends the decision to /api/review, then shows a thank-you.
+  const form = document.getElementById('review-form'), msg = document.getElementById('msg'), send = document.getElementById('send');
+  const THANKS = { approve: 'Thanks for approving. We&rsquo;ll let you know when the site goes live.', disapprove: 'Understood. We&rsquo;ll keep LSI off the site.', changes: 'Thanks. We&rsquo;ll make your changes and send you the updated version to confirm.' };
+  form.addEventListener('submit', async e => {
+    e.preventDefault(); msg.textContent = '';
+    const d = Object.fromEntries(new FormData(form));
+    if (!d.decision) { msg.textContent = 'Please pick Approve, Approve with changes or Don’t approve.'; return; }
+    if (d.decision === 'changes' && !d.comments.trim()) { msg.textContent = 'Please describe the changes in the comments box.'; form.comments.focus(); return; }
+    send.disabled = true; send.textContent = 'Sending…';
+    try {
+      const r = await fetch('/api/review', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ page: 'lsi', ...d }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.message || 'Your reply couldn’t be sent.');
+      document.getElementById('thanks-line').innerHTML = THANKS[d.decision];
+      form.hidden = true; const t = document.getElementById('thanks'); t.hidden = false; t.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (err) {
+      msg.textContent = (err.message || 'Your reply couldn’t be sent.') + ' You can also email support@aiboothstudio.com.';
+      send.disabled = false; send.textContent = 'Send';
+    }
+  });
 </script>
 </body>
 </html>
